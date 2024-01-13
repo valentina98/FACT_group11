@@ -7,10 +7,10 @@ channels:
 dependencies:
   - python=3.11.5
   - pip=23.3.1
-  - numpy
-  - torchvision
-  - pandas
-  - pytorchcv
+  - numpy=*
+  - torchvision=*
+  - pandas=*
+  - pytorchcv=*
   - pip:
-    - torch
-    - tqdm
+    - torch=*
+    - tqdm=*
