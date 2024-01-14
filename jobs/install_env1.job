@@ -14,7 +14,7 @@ module load 2023
 module load Anaconda3/2023.07-2
 
 # create the environment
-conda env create -f environment1.yml
+srun conda env create -f environment1.yml
 
 # verify installation
 conda info --envs
