@@ -1,4 +1,4 @@
-name: fact_proj
+name: fact_proj1
 channels:
   - conda-forge
   - pytorch
@@ -7,6 +7,8 @@ channels:
 dependencies:
   - python=3.11.5
   - pip=23.3.1
+  - pytorch=2.1.0
+  - pytorch-cuda=11.8 #?
   - torchvision=0.16.0
   - pip:
     - pytorchcv>=0.0.67
@@ -14,3 +16,5 @@ dependencies:
     - numpy>=1.19.5
     - torch>=2.1.2
     - tqdm>=4.66.1
+    - scikit-learn>=0.23.0
+    - argparse
