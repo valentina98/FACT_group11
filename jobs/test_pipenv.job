@@ -2,7 +2,7 @@
 
 #SBATCH --partition=gpu_mig
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=9
+#SBATCH --cpus-per-task=3
 #SBATCH --gpus=1
 #SBATCH --job-name=RunPaper
 #SBATCH --ntasks=1
@@ -18,5 +18,6 @@ module load Python/3.11.3-GCCcore-12.3.0
 pipenv shell
 
 python -c "import torch; print(torch.__version__)"
-
 srun python -c "import torch; print(torch.__version__)"
+pipenv run python your_script.py
+srun pipenv run python your_script.py
