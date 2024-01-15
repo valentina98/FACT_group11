@@ -11,10 +11,13 @@
 
 module purge
 module load 2023
+module load Python/3.11.3-GCCcore-12.3.0
+
+# check available environments
+conda info --envs
 
 # create the environment
-# conda env create -f environment.yml
 pipenv install
 
 # verify installation
-# conda info --envs
+conda info --envs

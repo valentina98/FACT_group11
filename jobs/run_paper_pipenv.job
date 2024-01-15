@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --partition=gpu_mig
+#SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=9
 #SBATCH --gpus=1
@@ -14,7 +14,6 @@ module purge
 module load 2023
 module load Python/3.11.3-GCCcore-12.3.0
 
-# Activate your environment
 pipenv shell
 
 OUTPUT_DIR=./conceptbanks
