@@ -53,7 +53,7 @@ def main():
 
     # Save CAV results    
     for C in concept_libs.keys():
-        lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{args.backbone_name}_{C}_{args.n_samples}.pkl")
+        lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{args.backbone_name}_{C}_{args.n_samples}_{args.seed}.pkl")
         with open(lib_path, "wb") as f:
             pickle.dump(concept_libs[C], f)
         print(f"Saved to: {lib_path}")        
