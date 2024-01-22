@@ -131,7 +131,11 @@ def main(args, backbone, preprocess):
     print(f"Saved to {hybrid_model_path}, {run_info_file}")
     for i in run_info:
         print(i)
-        print(run_info[i].avg)
+        try:
+            print(run_info[i].avg)
+        except:
+            print(run_info[i])
+
     print("Final test acc: ", run_info["test_acc"].avg)
 
 if __name__ == "__main__":    
