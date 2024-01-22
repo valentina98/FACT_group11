@@ -129,14 +129,6 @@ def main(args, backbone, preprocess):
         pickle.dump(run_info, f)
     
     print(f"Saved to {hybrid_model_path}, {run_info_file}")
-    for i in run_info:
-        print(i)
-        try:
-            print(run_info[i].avg)
-        except:
-            print(run_info[i])
-
-    print("Final test acc: ", run_info["test_acc"].avg)
 
 if __name__ == "__main__":    
     args = config()    
