@@ -29,7 +29,7 @@ def config():
     parser.add_argument("--num-epochs", default=10, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
     parser.add_argument("--l2-penalty", default=0.01, type=float)
-    parser.add_argument("--num-workers", default=2, type=float)
+    parser.add_argument("--num-workers", default=2, type=int)
     return parser.parse_args()
 
 
@@ -129,6 +129,8 @@ def main(args, backbone, preprocess):
         pickle.dump(run_info, f)
     
     print(f"Saved to {hybrid_model_path}, {run_info_file}")
+    print(run_info)
+    print("Final test acc: ", run_info["test_acc"].avg)
 
 if __name__ == "__main__":    
     args = config()    
