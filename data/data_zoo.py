@@ -109,12 +109,12 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
-    elif args.dataset == "coco":
+    elif args.dataset == "coco_stuff":
         # The list of biased classes provided in the paper
         classes = ["cup", "handbag", "apple", "car", "bus", "potted plant",
                    "spoon", "microwave", "keyboard", "clock", "hair drier", "skateboard"]
         from .coco_stuff_data import load_coco_stuff_data
-        train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, classes, args.n_samples, args.n_samples//2)
+        train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, classes, 500, 250)
 
         ########### TODO remove
         # Plot
