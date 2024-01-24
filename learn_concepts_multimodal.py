@@ -104,12 +104,12 @@ def preprocess_text_for_CLIP(text, max_length=77):
     return processed_text
 
 
-def get_concept_data(all_classes):
+def get_concept_data(all_classes,type="image"):
     all_concepts = set()
     # Collect concepts that are relevant to each class
     for cls_name in all_classes:
         print(f"Pulling concepts for {cls_name}")
-        all_concepts |= get_single_concept_data(cls_name)
+        all_concepts |= get_single_concept_data(cls_name,type=type)
     return all_concepts
 
 
