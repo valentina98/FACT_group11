@@ -115,26 +115,6 @@ def get_dataset(args, preprocess=None):
                    "spoon", "microwave", "keyboard", "clock", "hair drier", "skateboard"]
         from .coco_stuff_data import load_coco_stuff_data
         train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, classes, 500, 250)
-
-        ########### TODO remove
-        # Plot
-        import matplotlib.pyplot as plt
-
-        def show_sample_images(data_loader, idx_to_class, num_images=5):
-            images, labels = next(iter(data_loader))
-            fig, axes = plt.subplots(1, num_images, figsize=(15, 3))
-            for i, (image, label) in enumerate(zip(images[:10], labels[:10])):
-                axes[i].imshow(image.permute(1, 2, 0))
-                axes[i].set_title(idx_to_class[label])
-                axes[i].axis('off')
-            plt.show()
-
-        print("Displaying Training Samples:")
-        show_sample_images(train_loader, idx_to_class)
-
-        print("Displaying Validation Samples:")
-        show_sample_images(test_loader, idx_to_class)
-        ##########
                 
     else:
         raise ValueError(args.dataset)
