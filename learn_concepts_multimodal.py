@@ -221,8 +221,30 @@ if __name__ == "__main__":
         learn_conceptbank(args, all_concepts, args.classes)
 
     elif args.classes == "20ng":
+        newsgroup_name_mapping = {
+            "alt.atheism": "AtheismDebate",
+            "comp.graphics": "ComputerGraphics",
+            "comp.os.ms-windows.misc": "WindowsOS",
+            "comp.sys.ibm.pc.hardware": "IBMPCHardware",
+            "comp.sys.mac.hardware": "MacHardware",
+            "comp.windows.x": "XWindowSystem",
+            "misc.forsale": "SalesOffers",
+            "rec.autos": "Automobiles",
+            "rec.motorcycles": "Motorbikes",
+            "rec.sport.baseball": "Baseball",
+            "rec.sport.hockey": "Hockey",
+            "sci.crypt": "Cryptography",
+            "sci.electronics": "Electronics",
+            "sci.med": "Medicine",
+            "sci.space": "SpaceExploration",
+            "soc.religion.christian": "Christianity",
+            "talk.politics.guns": "GunPolitics",
+            "talk.politics.mideast": "MiddleEastPolitics",
+            "talk.politics.misc": "GeneralPolitics",
+            "talk.religion.misc": "ReligiousDiscussions"
+        }
         newsgroups_data = fetch_20newsgroups(subset='all')
-        all_classes = newsgroups_data.target_names
+        all_classes = [newsgroup_name_mapping.get(name, name) for name in newsgroups_data.target_names]
 
         all_concepts = get_concept_data(all_classes,type="nlp")
         all_concepts = clean_concepts(all_concepts)
