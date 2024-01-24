@@ -27,6 +27,7 @@ def get_single_concept_data(cls_name,type="image"):
     all_concepts = []
     
     if type == "nlp":
+        cls_name = cls_name.lower()
         # RelatedTo relations
         related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
         obj = requests.get(related_query.format(cls_name, cls_name)).json()
@@ -231,6 +232,7 @@ if __name__ == "__main__":
         all_classes = [newsgroup_name_mapping.get(name, name) for name in newsgroups_data.target_names]
 
         all_concepts = get_concept_data(all_classes,type="nlp")
+        print(all_concepts)
         all_concepts = clean_concepts(all_concepts)
         all_concepts = list(set(all_concepts).difference(set(all_classes)))
 
