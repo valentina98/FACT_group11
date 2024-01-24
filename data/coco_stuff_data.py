@@ -2,6 +2,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader, Dataset
 import fiftyone.zoo as foz
 from PIL import Image
+from fiftyone.core.expressions import F
 
 class CocoStuffDataset(Dataset):
     def __init__(self, filepaths, labels, transform=None):
