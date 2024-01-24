@@ -1,7 +1,9 @@
 from torchvision import transforms
 from torch.utils.data import DataLoader, Dataset
-import fiftyone.zoo as foz
 from PIL import Image
+import fiftyone as fo
+import fiftyone.zoo as foz
+from fiftyone import ViewField as F
 
 class CocoStuffDataset(Dataset):
     def __init__(self, filepaths, labels, transform=None):
@@ -63,13 +65,9 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
     train_filepaths, train_labels = [], []
     val_filepaths, val_labels = [], []
     for class_name in biased_classes:
-        train_view = train_dataset.filter_labels("ground_truth.detections", 
-                                             filter_field="label", 
-                                             filter_arg=class_name)
-
-        val_view = val_dataset.filter_labels("ground_truth.detections", 
-                                            filter_field="label", 
-                                            filter_arg=class_name)
+        # Create views that filter the datasets to only include samples that contain the specified classes
+        train_view = train_dataset.match(F("predictions.detections.label").contains(class_name))
+        val_view = val_dataset.match(F("predictions.detections.label").contains(class_name))
         
         sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
