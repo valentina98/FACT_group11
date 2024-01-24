@@ -107,11 +107,12 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         test_lbls = np.load(test_lbls_file)
 
     else:
-        if "bert" in backbone:
+        if "bert" in args.backbone_name:
             train_embs, train_projs, train_lbls = get_projections_nlp(args, backbone, posthoc_layer, train_loader)
-            
-        train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
-        test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
+            test_embs, test_projs, test_lbls = get_projections_nlp(args, backbone, posthoc_layer, test_loader)
+        else:    
+            train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
+            test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
 
         np.save(train_file, train_embs)
         np.save(test_file, test_embs)
