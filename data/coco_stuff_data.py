@@ -35,7 +35,7 @@ def sample_or_upsample(dataset_view, num_samples, seed):
     
     return sampled_filepaths
 
-def load_coco_stuff_data(args, biased_classes, num_test_samples_per_class=500, num_val_samples_per_class=250):
+def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, num_val_samples_per_class=250):
     """
     Loads the COCO dataset with a focus on specified biased classes, applies preprocessing,
     and returns PyTorch DataLoaders for training and validation sets.
@@ -66,7 +66,7 @@ def load_coco_stuff_data(args, biased_classes, num_test_samples_per_class=500, n
         train_view = train_dataset.filter_labels("ground_truth", F("label") == class_name)
         val_view = val_dataset.filter_labels("ground_truth", F("label") == class_name)
 
-        sampled_train_filepaths = sample_or_upsample(train_view, num_test_samples_per_class, args.seed)
+        sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
 
         train_filepaths.extend(sampled_train_filepaths)
@@ -82,5 +82,7 @@ def load_coco_stuff_data(args, biased_classes, num_test_samples_per_class=500, n
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
 
     idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
+
+    print("train_loader.len, val_loader.len, idx_to_class.len", train_loader.len, val_loader.len, idx_to_class.len)
 
     return train_loader, val_loader, idx_to_class
