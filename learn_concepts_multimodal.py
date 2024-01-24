@@ -58,7 +58,7 @@ def get_single_concept_data(cls_name,type="image"):
     for edge in obj["edges"]:
         all_concepts.append(edge['start']['label'])
     
-    if type = "nlp":
+    if type == "nlp":
         # RelatedTo relations
         related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo"
         obj = requests.get(related_query.format(cls_name)).json()
