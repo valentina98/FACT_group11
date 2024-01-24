@@ -20,7 +20,7 @@ def config():
     return parser.parse_args()
 
 
-def get_single_concept_data(cls_name):
+def get_single_concept_data(cls_name,type="image"):
     if cls_name in concept_cache:
         return concept_cache[cls_name]
     
@@ -57,6 +57,25 @@ def get_single_concept_data(cls_name):
     obj = requests.get(parts_query.format(cls_name, cls_name)).json()
     for edge in obj["edges"]:
         all_concepts.append(edge['start']['label'])
+    
+    if type = "nlp":
+        # RelatedTo relations
+        related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo"
+        obj = requests.get(related_query.format(cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        # Synonym relations
+        synonym_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Synonym"
+        obj = requests.get(synonym_query.format(cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        # UsedFor relations
+        usedfor_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/UsedFor"
+        obj = requests.get(usedfor_query.format(cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
     
     all_concepts = [c.lower() for c in all_concepts]
     # Drop the "a " for concepts defined like "a {concept}".
@@ -205,12 +224,12 @@ if __name__ == "__main__":
         newsgroups_data = fetch_20newsgroups(subset='all')
         all_classes = newsgroups_data.target_names
 
-        all_concepts = get_concept_data(all_classes)
+        all_concepts = get_concept_data(all_classes,type="nlp")
         all_concepts = clean_concepts(all_concepts)
         all_concepts = list(set(all_concepts).difference(set(all_classes)))
 
         for i in range(1, args.recurse):
-            all_concepts = get_concept_data(all_concepts)
+            all_concepts = get_concept_data(all_concepts,type="nlp")
             all_concepts = list(set(all_concepts))
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
