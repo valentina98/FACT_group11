@@ -20,5 +20,5 @@ HAM10K_DATA_DIR = "/content/FACT_group11/datasets/broden_concepts/"
 
 
 # BRODEN concept bank
-BRODEN_CONCEPTS = "/content/FACT_group11/datasets/broden_concepts/"
+BRODEN_CONCEPTS = "/content/drive/My Drive/PCBM_paper/FACT_group11/datasets/broden_concepts/"
 
