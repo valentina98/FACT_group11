@@ -2,7 +2,6 @@ from torchvision import transforms
 from torch.utils.data import DataLoader, Dataset
 import fiftyone.zoo as foz
 from PIL import Image
-from fiftyone.core.expressions import F
 
 class CocoStuffDataset(Dataset):
     def __init__(self, filepaths, labels, transform=None):
@@ -64,8 +63,8 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
     train_filepaths, train_labels = [], []
     val_filepaths, val_labels = [], []
     for class_name in biased_classes:
-        train_view = train_dataset.filter_labels("ground_truth", F("label") == class_name)
-        val_view = val_dataset.filter_labels("ground_truth", F("label") == class_name)
+        train_view = train_dataset.filter_labels("ground_truth", {"$eq": {"$label": class_name}})
+        val_view = val_dataset.filter_labels("ground_truth", {"$eq": {"$label": class_name}})
 
         sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
@@ -83,7 +82,5 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
 
     idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
-
-    print("train_loader.len, val_loader.len, idx_to_class.len", train_loader.len, val_loader.len, idx_to_class.len)
 
     return train_loader, val_loader, idx_to_class
