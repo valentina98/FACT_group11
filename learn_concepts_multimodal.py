@@ -26,6 +26,24 @@ def get_single_concept_data(cls_name,type="image"):
     
     all_concepts = []
     
+    if type == "nlp":
+        # RelatedTo relations
+        related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
+        obj = requests.get(related_query.format(cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        # Synonym relations
+        synonym_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Synonym&start=/c/en/{}"
+        obj = requests.get(synonym_query.format(cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        # UsedFor relations
+        usedfor_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/UsedFor&start=/c/en/{}"
+        obj = requests.get(usedfor_query.format(cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
     # Has relations
     has_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasA&start=/c/en/{}"
     obj = requests.get(has_query.format(cls_name, cls_name)).json()
@@ -57,25 +75,6 @@ def get_single_concept_data(cls_name,type="image"):
     obj = requests.get(parts_query.format(cls_name, cls_name)).json()
     for edge in obj["edges"]:
         all_concepts.append(edge['start']['label'])
-    
-    if type == "nlp":
-        # RelatedTo relations
-        related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
-        obj = requests.get(related_query.format(cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-
-        # Synonym relations
-        synonym_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Synonym&start=/c/en/{}"
-        obj = requests.get(synonym_query.format(cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-
-        # UsedFor relations
-        usedfor_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/UsedFor&start=/c/en/{}"
-        obj = requests.get(usedfor_query.format(cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
     
     all_concepts = [c.lower() for c in all_concepts]
     # Drop the "a " for concepts defined like "a {concept}".
