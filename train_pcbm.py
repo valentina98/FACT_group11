@@ -69,6 +69,7 @@ def run_linear_probe(args, train_data, test_data):
 
 
 def main(args, concept_bank, backbone, preprocess):
+    print(concept_bank.vectors.shape)
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
     # Get a clean conceptbank string
@@ -114,7 +115,6 @@ def main(args, concept_bank, backbone, preprocess):
 if __name__ == "__main__":
     args = config()
     all_concepts = pickle.load(open(args.concept_bank, 'rb'))
-    print(all_concepts.shape)
     all_concept_names = list(all_concepts.keys())
     print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
     concept_bank = ConceptBank(all_concepts, args.device)
