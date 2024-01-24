@@ -6,7 +6,9 @@ import clip
 import argparse
 import numpy as np
 from tqdm import tqdm
-
+import re
+import sklearn
+from sklearn.datasets import fetch_20newsgroups
 
 def config():
     parser = argparse.ArgumentParser()
@@ -68,6 +70,20 @@ def get_single_concept_data(cls_name):
     
     return all_concepts
 
+def preprocess_text_for_CLIP(text, max_length=77):
+    text = text.lower().strip()
+    text = re.sub(r"[^a-zA-Z0-9\s.,!?']", '', text)
+
+    tokens = clip.tokenize([text], truncate=True)[0].numpy()
+
+    max_length -= 2
+
+    truncated_tokens = tokens[:max_length + 1]
+
+    processed_text = clip._tokenizer.decode(truncated_tokens.tolist())
+
+    return processed_text
+
 
 def get_concept_data(all_classes):
     all_concepts = set()
@@ -113,7 +129,6 @@ def clean_concepts(scenario_concepts):
     scenario_concepts_rec = list(set(scenario_concepts_rec))
     return scenario_concepts_rec
 
-
 @torch.no_grad()
 def learn_conceptbank(args, concept_list, scenario):
     concept_dict = {}
@@ -131,6 +146,20 @@ def learn_conceptbank(args, concept_list, scenario):
     pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
     print(f"Dumped to : {concept_dict_path}")
 
+@torch.no_grad()
+def learn_conceptbank_nlp(args, concept_list, scenario):
+    concept_dict = {}
+    for concept in tqdm(concept_list):
+        # Adapting text for CLIP's limits
+        processed_text = preprocess_text_for_CLIP(concept)  # Define this function as needed
+        text = clip.tokenize(processed_text).to(args.device)
+        text_features = model.encode_text(text).cpu().numpy()
+        text_features = text_features/np.linalg.norm(text_features)
+        concept_dict[concept] = (text_features, None, None, 0, {})
+
+    concept_dict_path = os.path.join(args.out_dir, f"concept_{args.backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
+    pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
+    print(f"Dumped to : {concept_dict_path}")
 
 if __name__ == "__main__":
     args = config()
@@ -171,6 +200,23 @@ if __name__ == "__main__":
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
         learn_conceptbank(args, all_concepts, args.classes)
+
+    elif args.classes == "20ng":
+
+        newsgroups_data = fetch_20newsgroups(subset='all')
+        all_classes = newsgroups_data.target_names
+
+        all_concepts = get_concept_data(all_classes)
+        all_concepts = clean_concepts(all_concepts)
+        all_concepts = list(set(all_concepts).difference(set(all_classes)))
+
+        for i in range(1, args.recurse):
+            all_concepts = get_concept_data(all_concepts)
+            all_concepts = list(set(all_concepts))
+            all_concepts = clean_concepts(all_concepts)
+            all_concepts = list(set(all_concepts).difference(set(all_classes)))
+
+        learn_conceptbank_nlp(args, all_concepts, args.classes)
 
     else:
         raise ValueError(f"Unknown classes: {args.classes}. Define your dataset here!")
