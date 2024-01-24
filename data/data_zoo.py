@@ -1,6 +1,11 @@
 from torchvision import datasets
 import torch
 import os
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import LabelEncoder
+import torch
+from torch.utils.data import TensorDataset, DataLoader
 
 
 def get_dataset(args, preprocess=None):
@@ -62,6 +67,31 @@ def get_dataset(args, preprocess=None):
         train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
+    
+    elif args.dataset == "20ng":
+        train_data = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+        test_data = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
+
+        # Vectorizing the text data
+        vectorizer = TfidfVectorizer(max_features=5000, preprocessor=preprocess)
+        X_train = vectorizer.fit_transform(train_data.data).toarray()
+        X_test = vectorizer.transform(test_data.data).toarray()
+
+        # Encoding the target labels
+        encoder = LabelEncoder()
+        y_train = encoder.fit_transform(train_data.target)
+        y_test = encoder.transform(test_data.target)
+
+        # Creating TensorDatasets and DataLoaders
+        train_dataset = TensorDataset(torch.tensor(X_train, dtype=torch.float32), torch.tensor(y_train, dtype=torch.long))
+        test_dataset = TensorDataset(torch.tensor(X_test, dtype=torch.float32), torch.tensor(y_test, dtype=torch.long))
+
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+
+        # Mapping indices to class names
+        idx_to_class = {i: class_name for i, class_name in enumerate(train_data.target_names)}
+        classes = train_data.target_names
 
 
     else:

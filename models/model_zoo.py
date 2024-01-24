@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from transformers import BertTokenizer, BertModel
+import torch.nn as nn
+import torchvision.transforms as transforms
 
 from torchvision import transforms
 
@@ -56,6 +59,10 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
                         transforms.ToTensor(),
                         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                       ])
+    elif backbone_name.lower() == "bert":
+        model_name = 'bert-base-uncased'
+        backbone = BertModel.from_pretrained(model_name)
+        preprocess = None
     else:
         raise ValueError(backbone_name)
 

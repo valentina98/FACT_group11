@@ -3,6 +3,9 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from torch.utils.data import Dataset
+from transformers import BertTokenizer, BertModel
+import torch.nn as nn
+import torchvision.transforms as transforms
 
 
 def unpack_batch(batch):
@@ -34,6 +37,31 @@ def get_projections(args, backbone, posthoc_layer, loader):
             all_embs = np.concatenate([all_embs, embeddings], axis=0)
             all_projs = np.concatenate([all_projs, projs], axis=0)
             all_lbls = np.concatenate([all_lbls, batch_Y.numpy()], axis=0)
+    return all_embs, all_projs, all_lbls
+
+@torch.no_grad()
+def get_projections_nlp(args, backbone, posthoc_layer, loader):
+    all_projs, all_embs, all_lbls = None, None, None
+    for batch in tqdm(loader):
+        batch_X, batch_Y = batch
+        inputs = BertTokenizer(batch_X, padding=True, truncation=True, return_tensors="pt")
+        inputs = {k: v.to(args.device) for k, v in inputs.items()}
+
+        outputs = backbone(**inputs)
+        embeddings = outputs.last_hidden_state[:, 0, :].detach()
+
+        projs = posthoc_layer.compute_dist(embeddings).detach().cpu().numpy()
+        embeddings = embeddings.cpu().numpy()
+
+        if all_embs is None:
+            all_embs = embeddings
+            all_projs = projs
+            all_lbls = batch_Y.numpy()
+        else:
+            all_embs = np.concatenate([all_embs, embeddings], axis=0)
+            all_projs = np.concatenate([all_projs, projs], axis=0)
+            all_lbls = np.concatenate([all_lbls, batch_Y.numpy()], axis=0)
+
     return all_embs, all_projs, all_lbls
 
 
@@ -79,6 +107,9 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         test_lbls = np.load(test_lbls_file)
 
     else:
+        if "bert" in backbone:
+            train_embs, train_projs, train_lbls = get_projections_nlp(args, backbone, posthoc_layer, train_loader)
+            
         train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
         test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
 

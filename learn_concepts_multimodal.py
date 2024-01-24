@@ -202,7 +202,6 @@ if __name__ == "__main__":
         learn_conceptbank(args, all_concepts, args.classes)
 
     elif args.classes == "20ng":
-
         newsgroups_data = fetch_20newsgroups(subset='all')
         all_classes = newsgroups_data.target_names
 

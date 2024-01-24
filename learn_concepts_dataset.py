@@ -16,7 +16,7 @@ def config():
     parser.add_argument("--dataset-name", default="cub", type=str)
     parser.add_argument("--out-dir", required=True, type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seed", default=1, type=int, help="Random seed")
+    parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--num-workers", default=4, type=int, help="Number of workers in the data loader.")
     parser.add_argument("--batch-size", default=100, type=int, help="Batch size in the concept loader.")
     parser.add_argument("--C", nargs="+", default=[0.01, 0.1], type=float, help="Regularization parameter for SVMs.")
