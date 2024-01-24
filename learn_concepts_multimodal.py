@@ -17,6 +17,7 @@ class DimensionReducer(nn.Module):
         self.reducer = nn.Linear(input_dim, output_dim)
 
     def forward(self, x):
+        x = x.to(dtype=self.reducer.weight.dtype)
         return self.reducer(x)
 
 def config():
