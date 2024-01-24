@@ -36,7 +36,7 @@ def get_single_concept_data(cls_name,type="image"):
     
     all_concepts = []
     cls_name = cls_name.lower()
-    if type == "nlp":
+    if type == "nlpss":
         
         # RelatedTo relations
         related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
