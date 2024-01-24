@@ -60,19 +60,19 @@ def get_single_concept_data(cls_name,type="image"):
     
     if type == "nlp":
         # RelatedTo relations
-        related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo"
+        related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&end=/c/en/{}"
         obj = requests.get(related_query.format(cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
 
         # Synonym relations
-        synonym_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Synonym"
+        synonym_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Synonym&end=/c/en/{}"
         obj = requests.get(synonym_query.format(cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
 
         # UsedFor relations
-        usedfor_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/UsedFor"
+        usedfor_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/UsedFor&end=/c/en/{}"
         obj = requests.get(usedfor_query.format(cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
@@ -222,13 +222,13 @@ if __name__ == "__main__":
 
     elif args.classes == "20ng":
         newsgroup_name_mapping = {
-            "alt.atheism": "AtheismDebate",
-            "comp.graphics": "ComputerGraphics",
-            "comp.os.ms-windows.misc": "WindowsOS",
-            "comp.sys.ibm.pc.hardware": "IBMPCHardware",
-            "comp.sys.mac.hardware": "MacHardware",
-            "comp.windows.x": "XWindowSystem",
-            "misc.forsale": "SalesOffers",
+            "alt.atheism": "Atheism",
+            "comp.graphics": "Computer Graphics",
+            "comp.os.ms-windows.misc": "Windows Operating System",
+            "comp.sys.ibm.pc.hardware": "IBM",
+            "comp.sys.mac.hardware": "Macintosh",
+            "comp.windows.x": "GUI",
+            "misc.forsale": "Marketplace",
             "rec.autos": "Automobiles",
             "rec.motorcycles": "Motorbikes",
             "rec.sport.baseball": "Baseball",
@@ -236,12 +236,12 @@ if __name__ == "__main__":
             "sci.crypt": "Cryptography",
             "sci.electronics": "Electronics",
             "sci.med": "Medicine",
-            "sci.space": "SpaceExploration",
+            "sci.space": "Space Exploration",
             "soc.religion.christian": "Christianity",
-            "talk.politics.guns": "GunPolitics",
-            "talk.politics.mideast": "MiddleEastPolitics",
-            "talk.politics.misc": "GeneralPolitics",
-            "talk.religion.misc": "ReligiousDiscussions"
+            "talk.politics.guns": "Gun Politics",
+            "talk.politics.mideast": "Middle Eastern Politics",
+            "talk.politics.misc": "General Politics",
+            "talk.religion.misc": "Religion"
         }
         newsgroups_data = fetch_20newsgroups(subset='all')
         all_classes = [newsgroup_name_mapping.get(name, name) for name in newsgroups_data.target_names]
