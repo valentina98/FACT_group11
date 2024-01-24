@@ -164,21 +164,6 @@ def learn_conceptbank(args, concept_list, scenario):
     pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
     print(f"Dumped to : {concept_dict_path}")
 
-@torch.no_grad()
-def learn_conceptbank_nlp(args, concept_list, scenario):
-    concept_dict = {}
-    for concept in tqdm(concept_list):
-        # Adapting text for CLIP's limits
-        processed_text = preprocess_text_for_CLIP(concept)  # Define this function as needed
-        text = clip.tokenize(processed_text).to(args.device)
-        text_features = model.encode_text(text).cpu().numpy()
-        text_features = text_features/np.linalg.norm(text_features)
-        concept_dict[concept] = (text_features, None, None, 0, {})
-
-    concept_dict_path = os.path.join(args.out_dir, f"concept_{args.backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
-    pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
-    print(f"Dumped to : {concept_dict_path}")
-
 if __name__ == "__main__":
     args = config()
     model, _ = clip.load(args.backbone_name.split(":")[1], device=args.device, download_root=args.out_dir)
@@ -255,7 +240,7 @@ if __name__ == "__main__":
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
 
-        learn_conceptbank_nlp(args, all_concepts, args.classes)
+        learn_conceptbank(args, all_concepts, args.classes)
 
     else:
         raise ValueError(f"Unknown classes: {args.classes}. Define your dataset here!")
