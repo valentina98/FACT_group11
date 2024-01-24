@@ -44,7 +44,10 @@ def get_projections(args, backbone, posthoc_layer, loader):
 def get_projections_nlp(args, backbone, posthoc_layer, loader, tokenizer):
     all_projs, all_embs, all_lbls = None, None, None
     for batch in tqdm(loader):
+        batch_X, batch_Y = unpack_batch(batch)
+        print("Example text data:", batch_X[0])
         batch_X, batch_Y = batch
+        print("Example text data:", batch_X[0])
         inputs = tokenizer(batch_X, padding=True, truncation=True, return_tensors="pt")
         inputs = {k: v.to(args.device) for k, v in inputs.items()}
 
