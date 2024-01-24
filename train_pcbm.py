@@ -114,6 +114,7 @@ def main(args, concept_bank, backbone, preprocess):
 if __name__ == "__main__":
     args = config()
     all_concepts = pickle.load(open(args.concept_bank, 'rb'))
+    print(all_concepts.shape)
     all_concept_names = list(all_concepts.keys())
     print(f"Bank path: {args.concept_bank}. {len(all_concept_names)} concepts will be used.")
     concept_bank = ConceptBank(all_concepts, args.device)
