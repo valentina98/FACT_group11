@@ -8,6 +8,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 
 
+
 def unpack_batch(batch):
     if len(batch) == 3:
         return batch[0], batch[1]
@@ -40,11 +41,11 @@ def get_projections(args, backbone, posthoc_layer, loader):
     return all_embs, all_projs, all_lbls
 
 @torch.no_grad()
-def get_projections_nlp(args, backbone, posthoc_layer, loader):
+def get_projections_nlp(args, backbone, posthoc_layer, loader, tokenizer):
     all_projs, all_embs, all_lbls = None, None, None
     for batch in tqdm(loader):
         batch_X, batch_Y = batch
-        inputs = BertTokenizer(batch_X, padding=True, truncation=True, return_tensors="pt")
+        inputs = tokenizer(batch_X, padding=True, truncation=True, return_tensors="pt")
         inputs = {k: v.to(args.device) for k, v in inputs.items()}
 
         outputs = backbone(**inputs)
@@ -108,8 +109,9 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
 
     else:
         if "bert" in args.backbone_name:
-            train_embs, train_projs, train_lbls = get_projections_nlp(args, backbone, posthoc_layer, train_loader)
-            test_embs, test_projs, test_lbls = get_projections_nlp(args, backbone, posthoc_layer, test_loader)
+            tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+            train_embs, train_projs, train_lbls = get_projections_nlp(args, backbone, posthoc_layer, train_loader,tokenizer)
+            test_embs, test_projs, test_lbls = get_projections_nlp(args, backbone, posthoc_layer, test_loader,tokenizer)
         else:    
             train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
             test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
