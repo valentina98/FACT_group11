@@ -9,6 +9,15 @@ from tqdm import tqdm
 import re
 import sklearn
 from sklearn.datasets import fetch_20newsgroups
+import torch.nn as nn
+
+class DimensionReducer(nn.Module):
+    def __init__(self, input_dim=1024, output_dim=768):
+        super(DimensionReducer, self).__init__()
+        self.reducer = nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        return self.reducer(x)
 
 def config():
     parser = argparse.ArgumentParser()
@@ -156,6 +165,10 @@ def learn_conceptbank(args, concept_list, scenario):
         text = clip.tokenize(f"{concept}").to("cuda")
         text_features = model.encode_text(text).cpu().numpy()
         text_features = text_features/np.linalg.norm(text_features)
+        if "20ng" in args.classes:
+            dimension_reducer = DimensionReducer(input_dim=1024, output_dim=768).to(args.device)
+            dimension_reducer.eval()
+            text_features = dimension_reducer(torch.from_numpy(text_features).to(args.device)).cpu().numpy()
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the
         # `ConceptBank` class (see `concepts/concept_utils.py`).
         concept_dict[concept] = (text_features, None, None, 0, {})
