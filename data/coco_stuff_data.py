@@ -59,21 +59,14 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    train_dataset = foz.load_zoo_dataset("coco-2017", split="train", label_types=["detections"], classes=biased_classes, max_samples=num_train_samples_per_class)
-    val_dataset = foz.load_zoo_dataset("coco-2017", split="validation", label_types=["detections"], classes=biased_classes, max_samples=num_val_samples_per_class)
-
     train_filepaths, train_labels = [], []
     val_filepaths, val_labels = [], []
     for class_name in biased_classes:
-        # Create a filter expression for each class
-        filter_expr = F("label") == class_name
+        train_dataset = foz.load_zoo_dataset("coco-2017", split="train", label_types=["detections"], classes=[class_name], max_samples=num_train_samples_per_class)
+        val_dataset = foz.load_zoo_dataset("coco-2017", split="validation", label_types=["detections"], classes=[class_name], max_samples=num_val_samples_per_class)
 
-        # Apply the filter to the dataset views
-        train_view = train_dataset.filter_labels("ground_truth", filter_expr)
-        val_view = val_dataset.filter_labels("ground_truth", filter_expr)
-        
-        sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
-        sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
+        sampled_train_filepaths = sample_or_upsample(train_dataset, num_train_samples_per_class, args.seed)
+        sampled_val_filepaths = sample_or_upsample(val_dataset, num_val_samples_per_class, args.seed)
 
         train_filepaths.extend(sampled_train_filepaths)
         train_labels.extend([class_name] * len(sampled_train_filepaths))
