@@ -65,9 +65,12 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
     train_filepaths, train_labels = [], []
     val_filepaths, val_labels = [], []
     for class_name in biased_classes:
-        # Create views that filter the datasets to only include samples that contain the specified classes
-        train_view = train_dataset.match(F("predictions.detections.label").contains(class_name))
-        val_view = val_dataset.match(F("predictions.detections.label").contains(class_name))
+        # Create a filter expression for each class
+        filter_expr = F("label") == class_name
+
+        # Apply the filter to the dataset views
+        train_view = train_dataset.filter_labels("ground_truth", filter_expr)
+        val_view = val_dataset.filter_labels("ground_truth", filter_expr)
         
         sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
