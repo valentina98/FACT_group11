@@ -118,7 +118,12 @@ def get_dataset(args, preprocess=None):
 
         from .coco_stuff_data import load_coco_stuff_data
         train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, biased_classes, 500, 250)
-                
+
+        # debug
+        for batch_data, batch_labels in train_loader:
+            print(type(batch_data), type(batch_labels))
+            break 
+            
     else:
         raise ValueError(args.dataset)
 
