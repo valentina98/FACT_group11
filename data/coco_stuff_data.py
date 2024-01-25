@@ -15,17 +15,26 @@ class CocoStuffDataset(Dataset):
         return len(self.filepaths)
 
     def __getitem__(self, idx):
-        try:
-            image = Image.open(self.filepaths[idx]).convert('RGB')
-            label = self.labels[idx]
+        while True:
+            try:
+                image = Image.open(self.filepaths[idx]).convert('RGB')
+                label = self.labels[idx]
 
-            if self.transform:
-                image = self.transform(image)
+                if self.transform:
+                    image = self.transform(image)
 
-            return image, label
-        except Exception as e:
-            print(f"Error loading image: {self.filepaths[idx]}, Error: {e}")
-            return None, None
+                print(f"Label type: {type(label)}, Label value: {label}")
+
+                return image, label
+            except Exception as e:
+                print(f"Error loading image: {self.filepaths[idx]}, Error: {e}")
+                # Optionally, remove the invalid sample from the dataset
+                del self.filepaths[idx]
+                del self.labels[idx]
+
+                # If the dataset becomes empty, raise an exception or return a default value
+                if not self.filepaths:
+                    raise ValueError("All images in the dataset are invalid")
 
 def sample_or_upsample(dataset_view, num_samples, seed):
     sampled_filepaths = [sample.filepath for sample in dataset_view.take(num_samples, seed)]
@@ -73,11 +82,11 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
         train_view = train_dataset.filter_labels("ground_truth", filter_expr)
         val_view = val_dataset.filter_labels("ground_truth", filter_expr)
         
-        # Print the number of samples in each view after filtering
-        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}")
-
         sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
+
+        # Print the number of samples in each view after filtering
+        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {train_view.count()}, Sampled Validation View Size = {val_view.count()}")
 
         train_filepaths.extend(sampled_train_filepaths)
         train_labels.extend([class_name] * len(sampled_train_filepaths))
@@ -93,4 +102,9 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
 
     idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
 
+    # debug
+    for batch_data, batch_labels in train_loader:
+        print(type(batch_data), type(batch_labels))
+        break 
+            
     return train_loader, val_loader, idx_to_class
