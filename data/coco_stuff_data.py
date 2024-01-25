@@ -23,7 +23,7 @@ class CocoStuffDataset(Dataset):
                 if self.transform:
                     image = self.transform(image)
 
-                print(f"Label type: {type(label)}, Label value: {label}")
+                # print(f"Label type: {type(label)}, Label value: {label}")
 
                 return image, label
             except Exception as e:
@@ -86,7 +86,7 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
 
         # Print the number of samples in each view after filtering
-        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {train_view.count()}, Sampled Validation View Size = {val_view.count()}")
+        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {sampled_train_filepaths.count()}, Sampled Validation View Size = {sampled_val_filepaths.count()}")
 
         train_filepaths.extend(sampled_train_filepaths)
         train_labels.extend([class_name] * len(sampled_train_filepaths))
