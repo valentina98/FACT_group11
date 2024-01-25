@@ -104,7 +104,7 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
 
     # debug
     for batch_data, batch_labels in train_loader:
-        print(type(batch_data), type(batch_labels))
+        print(type(batch_data), type(batch_labels), len(batch_labels), type(batch_labels[0]), batch_labels[0])
         break 
             
     return train_loader, val_loader, idx_to_class
