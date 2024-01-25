@@ -122,5 +122,5 @@ def get_dataset(args, preprocess=None):
     else:
         raise ValueError(args.dataset)
 
-    return train_loader, test_loader, idx_to_class, classes
+    return train_loader, test_loader, idx_to_class, biased_classes
 
