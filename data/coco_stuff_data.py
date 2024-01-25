@@ -9,7 +9,7 @@ from fiftyone import ViewField as F
 class CocoStuffDataset(Dataset):
     def __init__(self, filepaths, labels, transform=None):
         self.filepaths = filepaths
-        self.labels = labels  # labels are now integers
+        self.labels = labels
         self.transform = transform
 
     def __len__(self):
@@ -25,6 +25,7 @@ class CocoStuffDataset(Dataset):
         return image, torch.tensor(label)
 
 def sample_or_upsample(dataset_view, num_samples, seed):
+    # Sample
     sampled_filepaths = [sample.filepath for sample in dataset_view.take(num_samples, seed)]
     
     # Upsample if there are not enough images
@@ -61,30 +62,27 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
 
     train_filepaths, train_labels = [], []
     val_filepaths, val_labels = [], []
-    label_to_idx = {class_name: idx for idx, class_name in enumerate(biased_classes)}
+    class_to_idx = {class_name: idx for idx, class_name in enumerate(biased_classes)}
     for class_name in biased_classes:
         
-        # Create a filter expression for each class
+        # Create views for the current class
         filter_expr = F("label") == class_name
-
-        # Apply the filter to the dataset views
         train_view = train_dataset.filter_labels("ground_truth", filter_expr)
         val_view = val_dataset.filter_labels("ground_truth", filter_expr)
         
+        # Sample or upsample to get the same number of images for each class
         sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
 
-        # Print the number of samples in each view after filtering
+        # Print the number of samples in each view after before and after sampling
         print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {len(sampled_train_filepaths)}, Sampled Validation View Size = {len(sampled_val_filepaths)}")
 
-        class_idx = label_to_idx[class_name]
+        class_idx = class_to_idx[class_name] # the index of the current class
 
         train_filepaths.extend(sampled_train_filepaths)
-        # train_labels.extend([class_name] * len(sampled_train_filepaths))
         train_labels.extend([class_idx] * len(sampled_train_filepaths))
 
         val_filepaths.extend(sampled_val_filepaths)
-        # val_labels.extend([class_name] * len(sampled_val_filepaths))
         val_labels.extend([class_idx] * len(sampled_val_filepaths))
 
     train_data = CocoStuffDataset(train_filepaths, train_labels, transform=preprocess)
@@ -95,9 +93,4 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
 
     idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
 
-    # debug
-    for batch_data, batch_labels in train_loader:
-        print(type(batch_data), type(batch_labels), len(batch_labels), type(batch_labels[0]), batch_labels[0])
-        break 
-            
     return train_loader, val_loader, idx_to_class

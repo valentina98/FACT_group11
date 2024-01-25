@@ -110,7 +110,7 @@ def get_dataset(args, preprocess=None):
         classes = list(class_to_idx.keys())
 
     elif args.dataset == "coco_stuff":
-        # The list of 20 biased classes at COCO discussed in the paper https://arxiv.org/pdf/2001.03152.pdf         
+        # The list of 20 biased COCO classes discussed in the paper https://arxiv.org/pdf/2001.03152.pdf         
         biased_classes = ['cup', 'wine glass', 'handbag', 'apple', 'car', 'bus', 
                           'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
                           'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
