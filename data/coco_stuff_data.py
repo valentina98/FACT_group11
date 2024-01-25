@@ -86,7 +86,7 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
         sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
 
         # Print the number of samples in each view after filtering
-        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {sampled_train_filepaths.count()}, Sampled Validation View Size = {sampled_val_filepaths.count()}")
+        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {len(sampled_train_filepaths)}, Sampled Validation View Size = {len(sampled_val_filepaths)}")
 
         train_filepaths.extend(sampled_train_filepaths)
         train_labels.extend([class_name] * len(sampled_train_filepaths))
