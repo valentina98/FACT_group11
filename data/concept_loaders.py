@@ -14,6 +14,7 @@ from nltk.corpus import framenet as fn
 from torch.utils.data import Dataset, DataLoader
 nltk.download('framenet_v17')
 
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 class FrameNetDataset(Dataset):
     def __init__(self, texts, tokenizer):
@@ -199,6 +200,7 @@ def get_framenet_sentences():
         sentences_with_frames[frame]['negative'] = negative_samples
 
     return sentences_with_frames
+
 def collate_fn(batch):
     input_ids = [item['input_ids'] for item in batch]
     attention_mask = [item['attention_mask'] for item in batch]
@@ -212,8 +214,6 @@ def collate_fn(batch):
 def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     np.random.seed(seed)
     concept_loaders = {}
-    
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     frame_data = get_framenet_sentences()
 
