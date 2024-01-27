@@ -5,9 +5,28 @@ import torch
 import pandas as pd
 import numpy as np
 from PIL import Image
-from torch.utils.data import DataLoader
 from .constants import CUB_PROCESSED_DIR
 
+from transformers import BertTokenizer
+import nltk
+import os
+from nltk.corpus import framenet as fn
+from torch.utils.data import Dataset, DataLoader
+nltk.download('framenet_v17')
+
+
+class FrameNetDataset(Dataset):
+    def __init__(self, texts, tokenizer):
+        self.texts = texts
+        self.tokenizer = tokenizer
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        text = self.texts[idx]
+        encoded_input = self.tokenizer(text, add_special_tokens=True, truncation=True, max_length=512)
+        return encoded_input
 
 def cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     from .cub import CUBConceptDataset, get_concept_dicts
@@ -155,9 +174,66 @@ def broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
             "neg": neg_loader
         }
     return concept_loaders
+
+def extract_frame_data(sentence):
+    frame_data = []
+    for annSet in sentence.annotationSet:
+        if annSet.frameName:
+            frame_data.append(annSet.frameName)
+    return frame_data
+
+def get_framenet_sentences():
+    sentences_with_frames = {}
+    all_sentences = []
+
+    for doc in fn.docs():
+        for sentence in doc.sents:
+            all_sentences.append(sentence.text)
+            for frame in sentence.frames:
+                if frame.name not in sentences_with_frames:
+                    sentences_with_frames[frame.name] = {'positive': [], 'negative': []}
+                sentences_with_frames[frame.name]['positive'].append(sentence.text)
+
+    for frame, data in sentences_with_frames.items():
+        negative_samples = [s for s in all_sentences if s not in data['positive']]
+        sentences_with_frames[frame]['negative'] = negative_samples
+
+    return sentences_with_frames
+def collate_fn(batch):
+    input_ids = [item['input_ids'] for item in batch]
+    attention_mask = [item['attention_mask'] for item in batch]
+
+    # Pad sequences
+    input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+    attention_mask = torch.nn.utils.rnn.pad_sequence(attention_mask, batch_first=True, padding_value=0)
+
+    return {"input_ids": input_ids, "attention_mask": attention_mask}
+
+def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
+    np.random.seed(seed)
+    concept_loaders = {}
+    
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+    frame_data = get_framenet_sentences()
+
+    for frame, data in frame_data.items():
+        pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
+        neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
+
+        pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer)
+        neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer)
+
+        pos_loader = DataLoader(pos_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,collate_fn=collate_fn)
+        neg_loader = DataLoader(neg_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,collate_fn=collate_fn)
+
+        concept_loaders[frame] = {'pos': pos_loader, 'neg': neg_loader}
+
+    return concept_loaders
         
     
 def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, num_workers=4, seed=1):
+
     if dataset_name == "cub":
        return cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     
@@ -166,6 +242,9 @@ def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, 
     
     elif dataset_name == "broden":
         return broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
+    
+    elif dataset_name == "frame":
+        return framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
     
