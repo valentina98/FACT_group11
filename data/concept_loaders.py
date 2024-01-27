@@ -193,8 +193,10 @@ def get_framenet_sentences():
 
         # Iterate through lexical units
         for lu_name, lu in frame.lexUnit.items():
-            print(lu)
-            print("exemplars: " + lu.exemplars)
+            # Print the number of exemplars for this lexical unit
+            num_exemplars = len(lu.exemplars)
+            print(f"Lexical Unit: {lu_name}, Number of Exemplars: {num_exemplars}")
+
             # Access each exemplar associated with the lexical unit
             for exemplar in lu.exemplars:
                 for annoSet in exemplar.annoSet:
