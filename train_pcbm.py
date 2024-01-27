@@ -4,13 +4,12 @@ import pickle
 import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score
-
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections, average_precision_score
+from training_tools import load_or_compute_projections
 
 
 def config():
@@ -62,6 +61,8 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         "cls_acc": cls_acc,
     }
 
+    print("If it's a multi-label task, compute mAP", num_classes, test_labels.ndim)
+    
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
@@ -69,9 +70,13 @@ def run_linear_probe(args, train_data, test_data, num_classes):
 
     # If it's a multi-label task, compute mAP
     elif num_classes > 2 and test_labels.ndim > 1:
+        # train_probabilities = classifier.predict_proba(train_features)
+        # train_mAP = average_precision_score(train_labels, train_probabilities)
+        # run_info["train_mAP"] = train_mAP
+        
         test_probabilities = classifier.predict_proba(test_features)
-        mAP = average_precision_score(test_labels, test_probabilities, average="macro")
-        run_info["test_mAP"] = mAP
+        test_mAP = average_precision_score(test_labels, test_probabilities)
+        run_info["test_mAP"] = test_mAP
         
     return run_info, classifier.coef_, classifier.intercept_
 
