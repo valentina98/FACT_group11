@@ -187,14 +187,19 @@ def get_framenet_sentences():
     sentences_with_frames = {}
     all_sentences = []
 
-    for doc in fn.docs():
-        for sentence in doc.sents:
-            all_sentences.append(sentence.text)
-            for frame in sentence.frames:
-                if frame.name not in sentences_with_frames:
-                    sentences_with_frames[frame.name] = {'positive': [], 'negative': []}
-                sentences_with_frames[frame.name]['positive'].append(sentence.text)
+    # Iterate through each frame in FrameNet
+    for frame in fn.frames():
+        frame_name = frame.name
+        sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
 
+        # Iterate through each lexical unit in the frame
+        for lu in frame.lexUnit:
+            for sentence in fn.exemplars(lu.ID):
+                # Each sentence is an example of the frame
+                sentences_with_frames[frame_name]['positive'].append(sentence.text)
+                all_sentences.append(sentence.text)
+
+    # Assign negative samples
     for frame, data in sentences_with_frames.items():
         negative_samples = [s for s in all_sentences if s not in data['positive']]
         sentences_with_frames[frame]['negative'] = negative_samples
