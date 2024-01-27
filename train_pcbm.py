@@ -56,14 +56,23 @@ def run_linear_probe(args, train_data, test_data):
             (train_labels[train_lbl_mask] == train_predictions[train_lbl_mask]).astype(float))
         print(f"{lbl}: {cls_acc['test'][lbl]}")
 
-    run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
-                "cls_acc": cls_acc,
-                }
+    run_info = {
+        "train_acc": train_accuracy,
+        "test_acc": test_accuracy,
+        "cls_acc": cls_acc,
+    }
 
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
+
+    # If it's a multi-label task, compute mAP
+    elif num_classes > 2 and test_labels.ndim > 1:
+        test_probabilities = classifier.predict_proba(test_features)
+        mAP = average_precision_score(test_labels, test_probabilities, average="macro")
+        run_info["test_mAP"] = mAP
+        
     return run_info, classifier.coef_, classifier.intercept_
 
 

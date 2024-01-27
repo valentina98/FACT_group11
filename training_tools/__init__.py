@@ -1,4 +1,4 @@
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_recall_curve, auc
 import numpy as np
 from .embedding_tools import load_or_compute_projections
 
@@ -24,7 +24,8 @@ class MetricComputer(object):
     def __init__(self, metric_names=None, n_classes=5):
         __all_metrics__ = {"accuracy": self._accuracy, 
                             "class-level-accuracy": self._class_level_accuracy,
-                            "confusion_matrix": self._confusion_matrix}
+                            "confusion_matrix": self._confusion_matrix,
+                            "mean_average_precision": self._mean_average_precision}
         all_names = list(__all_metrics__.keys())
         if metric_names is None:
             metric_names = all_names
@@ -60,3 +61,16 @@ class MetricComputer(object):
         y_true = target.detach().cpu()
         y_pred = pred.detach().cpu()
         return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
+
+    def _mean_average_precision(self, out, pred, target):
+        average_precisions = []
+        for c in range(self.n_classes):
+            class_scores = out[:, c].detach()
+            true_class = (target == c).int().detach()
+
+            precision, recall, _ = precision_recall_curve(true_class.cpu().numpy(), class_scores.cpu().numpy())
+            ap = auc(recall, precision)
+            average_precisions.append(ap)
+
+        mean_ap = np.mean(average_precisions)
+        return mean_ap
