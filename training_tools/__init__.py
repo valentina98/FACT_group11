@@ -76,6 +76,7 @@ class MetricComputer(object):
 
     def _mean_average_precision(self, out, pred, target):
         average_precisions = []
+        print("target - the true label", target)
         for c in range(self.n_classes):
             class_scores = out[:, c].detach().cpu().numpy()
             true_class = (target == c).detach().cpu().numpy()

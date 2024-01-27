@@ -61,7 +61,7 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         "cls_acc": cls_acc,
     }
 
-    print("If it's a multi-label task, compute mAP", num_classes, test_labels.ndim)
+    # print("If it's a multi-label task, compute mAP", num_classes, test_labels.ndim)
     
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:
@@ -69,10 +69,11 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
 
     # If it's a multi-label task, compute mAP
-    elif num_classes > 2 and test_labels.ndim > 1:
-        # train_probabilities = classifier.predict_proba(train_features)
-        # train_mAP = average_precision_score(train_labels, train_probabilities)
-        # run_info["train_mAP"] = train_mAP
+    elif num_classes > 2:
+    # and test_labels.ndim > 1:
+        train_probabilities = classifier.predict_proba(train_features)
+        train_mAP = average_precision_score(train_labels, train_probabilities)
+        run_info["train_mAP"] = train_mAP
         
         test_probabilities = classifier.predict_proba(test_features)
         test_mAP = average_precision_score(test_labels, test_probabilities)
