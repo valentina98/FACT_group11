@@ -88,6 +88,35 @@ def get_embeddings(loader, model, device="cuda"):
             activations = np.concatenate([activations, batch_act], axis=0)
     return activations
 
+@torch.no_grad()
+def get_text_embeddings(loader, model, device="cuda"):
+    """
+    Args:
+        loader (torch.utils.data.DataLoader): Data loader returning tokenized text data.
+        model (nn.Module): Text-based model (e.g., BERT).
+        device (str, optional): Device to use. Defaults to "cuda".
+
+    Returns:
+        np.array: Embeddings as a numpy array.
+    """
+    model = model.to(device)
+    model.eval()  # Set model to evaluation mode
+    embeddings = None
+
+    for batch in tqdm(loader):
+        input_ids = batch['input_ids'].to(device)
+        attention_mask = batch['attention_mask'].to(device)
+
+        # Get model embeddings (or outputs)
+        batch_emb = model(input_ids, attention_mask=attention_mask)[0].squeeze().detach().cpu().numpy()
+        
+        if embeddings is None:
+            embeddings = batch_emb
+        else:
+            embeddings = np.concatenate([embeddings, batch_emb], axis=0)
+
+    return embeddings
+
 
 def get_cavs(X_train, y_train, X_val, y_val, C):
     """Extract the concept activation vectors and the corresponding stats
@@ -116,7 +145,7 @@ def get_cavs(X_train, y_train, X_val, y_val, C):
     return concept_info
 
 
-def learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, C, device="cuda"):
+def learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, C, device="cuda",nlp=False):
     """Learning CAVs and related margin stats.
     Args:
         pos_loader (torch.utils.data.DataLoader): A PyTorch DataLoader yielding positive samples for each concept
@@ -130,8 +159,12 @@ def learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, C, device="c
         dict: Concept information, including the CAV and margin stats.
     """
     print("Extracting Embeddings: ")
-    pos_act = get_embeddings(pos_loader, backbone, device=device)
-    neg_act = get_embeddings(neg_loader, backbone, device=device)
+    if nlp:
+        pos_act = get_text_embeddings(pos_loader, backbone, device=device)
+        neg_act = get_text_embeddings(neg_loader, backbone, device=device)
+    else:
+        pos_act = get_embeddings(pos_loader, backbone, device=device)
+        neg_act = get_embeddings(neg_loader, backbone, device=device)
     
     X_train = np.concatenate([pos_act[:n_samples], neg_act[:n_samples]], axis=0)
     X_val = np.concatenate([pos_act[n_samples:], neg_act[n_samples:]], axis=0)
