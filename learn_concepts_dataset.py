@@ -27,7 +27,7 @@ def config():
 def main():
     args = config()
     n_samples = args.n_samples
-
+    nlp = True if args.dataset == "frame" else False
     # Bottleneck part of model
     backbone, preprocess = get_model(args, args.backbone_name)
     backbone = backbone.to(args.device)
@@ -44,7 +44,7 @@ def main():
     for concept_name, loaders in concept_loaders.items():
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
         # Get CAV for each concept using positive/negative image split
-        cav_info = learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, args.C, device="cuda")
+        cav_info = learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, args.C, device="cuda",nlp=nlp)
         
         # Store CAV train acc, val acc, margin info for each regularization parameter and each concept
         for C in args.C:
