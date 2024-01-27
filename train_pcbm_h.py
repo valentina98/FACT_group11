@@ -90,6 +90,9 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
 
         all_train_preds = torch.cat(all_train_preds)
         all_train_labels = torch.cat(all_train_labels)
+        print("all_train_preds", all_train_preds)
+        print("all_train_preds.argmax(dim=1)", all_train_preds.argmax(dim=1))
+        print("all_train_labels", all_train_labels)
         train_mAP = computer._mean_average_precision(all_train_preds, all_train_preds.argmax(dim=1), all_train_labels)
         epoch_summary["mAP"].update(train_mAP)
 
