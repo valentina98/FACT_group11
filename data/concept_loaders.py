@@ -224,6 +224,8 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     frame_data = get_framenet_sentences()
 
     for frame, data in frame_data.items():
+        print(data)
+        print(frame)
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
 
