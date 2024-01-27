@@ -74,11 +74,11 @@ class MetricComputer(object):
 
     #     return np.mean(average_precisions)
 
-    def _mean_average_precision(self, out, target):
+    def _mean_average_precision(self, out, pred, target):
         average_precisions = []
         for c in range(self.n_classes):
             class_scores = out[:, c].detach().cpu().numpy()
-            true_class = (target == c).cpu().numpy()
+            true_class = (target == c).detach().cpu().numpy()
 
             ap = average_precision_score(true_class, class_scores)
             average_precisions.append(ap)
