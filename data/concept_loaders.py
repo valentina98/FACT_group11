@@ -193,15 +193,14 @@ def get_framenet_sentences():
 
         # Iterate through lexical units
         for lu_name, lu in frame.lexUnit.items():
-            # Print the number of exemplars for this lexical unit
-            num_exemplars = len(lu.exemplars)
-            print(f"Lexical Unit: {lu_name}, Number of Exemplars: {num_exemplars}")
+            print(f"Lexical Unit: {lu_name}, Number of Exemplars: {len(lu.exemplars)}")
 
-            # Access each exemplar associated with the lexical unit
+            # Access each exemplar and its annotation sets
             for exemplar in lu.exemplars:
-                for annoSet in exemplar.annoSet:
-                    if 'sentence' in annoSet:
-                        sentence_text = annoSet['sentence'].text
+                exemplar_id = exemplar.ID
+                for annoSet in fn.exemplar(exemplar_id).annoSet:
+                    if 'sentence' in annoSet and 'text' in annoSet['sentence']:
+                        sentence_text = annoSet['sentence']['text']
                         sentences_with_frames[frame_name]['positive'].append(sentence_text)
                         all_sentences.append(sentence_text)
 
