@@ -192,12 +192,13 @@ def get_framenet_sentences():
         sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
 
         # Iterate through lexical units
-        for lu in frame.lexUnit.values():
-            # Access exemplar sentences
-            for sentence_id in lu.exemplar_sentences:
-                sentence = fn.sentence(sentence_id).text
-                sentences_with_frames[frame_name]['positive'].append(sentence)
-                all_sentences.append(sentence)
+        for lu_id, lu in frame.lexUnit.items():
+            # Access each exemplar associated with the lexical unit
+            lu_object = fn.lu(lu_id)
+            for exemplar in lu_object.exemplars:
+                sentence_text = exemplar.text
+                sentences_with_frames[frame_name]['positive'].append(sentence_text)
+                all_sentences.append(sentence_text)
 
     # Assign negative samples
     for frame, data in sentences_with_frames.items():
