@@ -222,7 +222,7 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     concept_loaders = {}
 
     frame_data = get_framenet_sentences()
-
+    print(frame_data)
     for frame, data in frame_data.items():
         print(data)
         print(frame)
