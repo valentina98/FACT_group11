@@ -190,10 +190,11 @@ def get_framenet_sentences():
     for frame in fn.frames():
         frame_name = frame.name
         sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
-        print(frame.lexUnit.values())
         # Iterate through lexical units
         for lu in frame.lexUnit.values():
             # Access each example sentence associated with the lexical unit
+            print(lu)
+            print(lu.get('annoSet', []))
             for annoset in lu.get('annoSet', []):
                 if 'sentence' in annoset:
                     sentence_text = annoset['sentence'].get('text', '')
