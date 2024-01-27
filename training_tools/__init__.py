@@ -1,4 +1,4 @@
-from sklearn.metrics import confusion_matrix, precision_recall_curve, auc
+from sklearn.metrics import confusion_matrix, precision_recall_curve, auc, average_precision_score
 import numpy as np
 from .embedding_tools import load_or_compute_projections
 
@@ -62,15 +62,25 @@ class MetricComputer(object):
         y_pred = pred.detach().cpu()
         return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
 
-    def _mean_average_precision(self, out, pred, target):
+    # def _mean_average_precision(self, out, pred, target):
+    #     average_precisions = []
+    #     for c in range(self.n_classes):
+    #         class_scores = out[:, c].detach()
+    #         true_class = (target == c).int().detach()
+
+    #         precision, recall, _ = precision_recall_curve(true_class.cpu().numpy(), class_scores.cpu().numpy())
+    #         ap = auc(recall, precision)
+    #         average_precisions.append(ap)
+
+    #     return np.mean(average_precisions)
+
+    def _mean_average_precision(self, out, target):
         average_precisions = []
         for c in range(self.n_classes):
-            class_scores = out[:, c].detach()
-            true_class = (target == c).int().detach()
+            class_scores = out[:, c].detach().cpu().numpy()
+            true_class = (target == c).cpu().numpy()
 
-            precision, recall, _ = precision_recall_curve(true_class.cpu().numpy(), class_scores.cpu().numpy())
-            ap = auc(recall, precision)
+            ap = average_precision_score(true_class, class_scores)
             average_precisions.append(ap)
 
-        mean_ap = np.mean(average_precisions)
-        return mean_ap
+        return np.mean(average_precisions)

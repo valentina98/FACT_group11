@@ -10,7 +10,7 @@ from sklearn.metrics import roc_auc_score
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
-from training_tools import load_or_compute_projections
+from training_tools import load_or_compute_projections, average_precision_score
 
 
 def config():
@@ -29,7 +29,7 @@ def config():
     return parser.parse_args()
 
 
-def run_linear_probe(args, train_data, test_data):
+def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
@@ -94,7 +94,7 @@ def main(args, concept_bank, backbone, preprocess):
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
-    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
+    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), num_classes)
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
