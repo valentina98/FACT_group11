@@ -196,9 +196,11 @@ def collate_fn(batch):
 def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     np.random.seed(seed)
     concept_loaders = {}
-
+    frame_data = None
     with open('data/framenet_sentences.pkl', 'rb') as file:
         frame_data = pickle.load(file)
+
+    print(frame_data)
     for frame, data in frame_data.items():
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
