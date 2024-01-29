@@ -197,6 +197,7 @@ def load_all_data(chunks_dir):
     combined_data = {}
 
     chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')]
+    print(chunk_files)
     
     for chunk_file in chunk_files:
         file_path = os.path.join(chunks_dir, chunk_file)
