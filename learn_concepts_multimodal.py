@@ -37,7 +37,6 @@ def get_single_concept_data(cls_name,type="image"):
     all_concepts = []
     cls_name = cls_name.lower()
     if type == "nlp":
-        
         # RelatedTo relations
         related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
         obj = requests.get(related_query.format(cls_name, cls_name)).json()
@@ -68,6 +67,16 @@ def get_single_concept_data(cls_name,type="image"):
 
         atlocation_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/AtLocation&start=/c/en/{}"
         obj = requests.get(atlocation_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+            
+        partof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&start=/c/en/{}"
+        obj = requests.get(partof_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        hascontext_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasContext&start=/c/en/{}"
+        obj = requests.get(hascontext_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
         
