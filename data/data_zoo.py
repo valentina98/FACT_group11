@@ -82,12 +82,10 @@ def get_dataset(args, preprocess=None):
         train_data = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
         test_data = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
 
-        # Encode the labels
         encoder = LabelEncoder()
         y_train = encoder.fit_transform(train_data.target)
         y_test = encoder.transform(test_data.target)
 
-        # Convert labels to tensors
         y_train_tensor = torch.tensor(y_train, dtype=torch.long)
         y_test_tensor = torch.tensor(y_test, dtype=torch.long)
 
