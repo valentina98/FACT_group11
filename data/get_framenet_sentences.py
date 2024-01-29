@@ -26,3 +26,9 @@ def get_framenet_sentences():
     with open('framenet_sentences.pkl', 'wb') as file:
         pickle.dump(sentences_with_frames, file)
 
+def main():
+    get_framenet_sentences()
+
+if __name__ == "__main__":
+    main()
+
