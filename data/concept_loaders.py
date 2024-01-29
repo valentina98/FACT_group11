@@ -194,12 +194,12 @@ def get_framenet_sentences():
         for lu_name, lu in frame.lexUnit.items():
             lu_id = lu.ID
             lu_object = fn.lu(lu_id)
-
+            print(len(lu_object.exemplars))
             for exemplar in lu_object.exemplars:
                 sentence_text = exemplar.text
                 sentences_with_frames[frame_name]['positive'].append(sentence_text)
+                print("Frame name: " +  str(frame_name) + " text: " + sentence_text)
                 all_sentences.append(sentence_text)
-    print(all_sentences)
     for frame, data in sentences_with_frames.items():
         negative_samples = [s for s in all_sentences if s not in data['positive']]
         sentences_with_frames[frame]['negative'] = negative_samples
@@ -221,10 +221,7 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     concept_loaders = {}
 
     frame_data = get_framenet_sentences()
-    print(frame_data)
     for frame, data in frame_data.items():
-        print(data)
-        print(frame)
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
 
