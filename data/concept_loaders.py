@@ -195,9 +195,8 @@ def collate_fn(batch):
 
 def load_all_data(chunks_dir):
     combined_data = {}
-    print("here")
+
     chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')]
-    print(chunk_files)
     
     for chunk_file in chunk_files:
         file_path = os.path.join(chunks_dir, chunk_file)
@@ -215,7 +214,6 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     np.random.seed(seed)
     concept_loaders = {}
     combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
-    print(combined_data)
     for frame, data in combined_data.items():
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
