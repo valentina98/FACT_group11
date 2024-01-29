@@ -195,7 +195,7 @@ def collate_fn(batch):
 
 def load_all_data(chunks_dir):
     combined_data = {}
-
+    print("here")
     chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')]
     print(chunk_files)
     
