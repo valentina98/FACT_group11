@@ -198,7 +198,7 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     concept_loaders = {}
     print("here")
     frame_data = None
-    with open('data/framenet_sentences.pkl', 'rb') as file:
+    with open('./content/drive/MyDrive/Colab Notebooks/framenet_sentences.pkl', 'rb') as file:
         frame_data = pickle.load(file)
 
     print(frame_data)
