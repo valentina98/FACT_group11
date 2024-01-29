@@ -210,15 +210,24 @@ def load_all_data(chunks_dir):
 
     return combined_data
 
+def generate_negative_samples(combined_data, frame_to_exclude, num_samples):
+    all_other_positive_samples = []
+    for frame, data in combined_data.items():
+        if frame != frame_to_exclude:
+            all_other_positive_samples.extend(data['positive'])
+    
+    if len(all_other_positive_samples) < num_samples:
+        return np.random.choice(all_other_positive_samples, num_samples, replace=True)
+    else:
+        return np.random.choice(all_other_positive_samples, num_samples, replace=False)
+
 def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     np.random.seed(seed)
     concept_loaders = {}
     combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
     for frame, data in combined_data.items():
-        print(data['positive'])
-        print(data['negative'])
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
-        neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
+        neg_samples = generate_negative_samples(combined_data, frame, n_samples)
 
         pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer, preprocess=preprocess)
         neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer, preprocess=preprocess)
