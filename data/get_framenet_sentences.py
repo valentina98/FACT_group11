@@ -4,11 +4,19 @@ import gzip
 from nltk.corpus import framenet as fn
 nltk.download('framenet_v17')
 
-def get_framenet_sentences():
+def save_chunk(chunk, chunk_index):
+    filename = f'framenet_sentences_{chunk_index}.pkl.gz'
+    with gzip.open(filename, 'wb') as file:
+        pickle.dump(chunk, file)
+    print(f"Saved chunk {chunk_index}")
+
+def get_framenet_sentences(chunk_size=100):
     sentences_with_frames = {}
-    all_sentences = []
-    print(len(fn.frames()))
+    frame_count = 0
+    chunk_index = 1
+
     for frame in fn.frames():
+        frame_count += 1
         frame_name = frame.name
         sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
 
@@ -18,14 +26,15 @@ def get_framenet_sentences():
             for exemplar in lu_object.exemplars:
                 sentence_text = exemplar.text
                 sentences_with_frames[frame_name]['positive'].append(sentence_text)
-                #print("Frame name: " +  str(frame_name) + " text: " + sentence_text)
-                all_sentences.append(sentence_text)
-    for frame, data in sentences_with_frames.items():
-        negative_samples = [s for s in all_sentences if s not in data['positive']]
-        sentences_with_frames[frame]['negative'] = negative_samples
 
-    with gzip.open('framenet_sentences.pkl', 'wb') as file:
-        pickle.dump(sentences_with_frames, file)
+        if frame_count % chunk_size == 0:
+            save_chunk(sentences_with_frames, chunk_index)
+            sentences_with_frames = {}
+            chunk_index += 1
+
+    # Saving the last chunk
+    if sentences_with_frames:
+        save_chunk(sentences_with_frames, chunk_index)
 
 def main():
     get_framenet_sentences()

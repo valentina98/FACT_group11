@@ -193,24 +193,36 @@ def collate_fn(batch):
 
     return {"input_ids": input_ids, "attention_mask": attention_mask}
 
-def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
+def load_all_data(chunks_dir):
+    combined_data = {}
+
+    chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')]
+    
+    for chunk_file in chunk_files:
+        file_path = os.path.join(chunks_dir, chunk_file)
+        with gzip.open(file_path, 'rb') as file:
+            frame_data = pickle.load(file)
+            for frame, data in frame_data.items():
+                if frame not in combined_data:
+                    combined_data[frame] = {'positive': [], 'negative': []}
+                combined_data[frame]['positive'].extend(data['positive'])
+                combined_data[frame]['negative'].extend(data['negative'])
+
+    return combined_data
+
+def framenet_concept_loaders(combined_data, preprocess, tokenizer, n_samples, batch_size, num_workers, seed, collate_fn):
     np.random.seed(seed)
     concept_loaders = {}
-    print("here")
-    frame_data = None
-    with gzip.open('/content/drive/MyDrive/Colab Notebooks/framenet_sentences.pkl', 'rb') as file:
-        frame_data = pickle.load(file)
-
-    print(frame_data)
-    for frame, data in frame_data.items():
+    combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
+    for frame, data in combined_data.items():
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
 
-        pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer)
-        neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer)
+        pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer, preprocess=preprocess)
+        neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer, preprocess=preprocess)
 
-        pos_loader = DataLoader(pos_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,collate_fn=collate_fn)
-        neg_loader = DataLoader(neg_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,collate_fn=collate_fn)
+        pos_loader = DataLoader(pos_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+        neg_loader = DataLoader(neg_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
 
         concept_loaders[frame] = {'pos': pos_loader, 'neg': neg_loader}
 
