@@ -198,7 +198,7 @@ def get_framenet_sentences():
             for exemplar in lu_object.exemplars:
                 sentence_text = exemplar.text
                 sentences_with_frames[frame_name]['positive'].append(sentence_text)
-                print("Frame name: " +  str(frame_name) + " text: " + sentence_text)
+                #print("Frame name: " +  str(frame_name) + " text: " + sentence_text)
                 all_sentences.append(sentence_text)
     for frame, data in sentences_with_frames.items():
         negative_samples = [s for s in all_sentences if s not in data['positive']]
