@@ -210,7 +210,7 @@ def load_all_data(chunks_dir):
 
     return combined_data
 
-def framenet_concept_loaders(combined_data, preprocess, tokenizer, n_samples, batch_size, num_workers, seed, collate_fn):
+def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     np.random.seed(seed)
     concept_loaders = {}
     combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
