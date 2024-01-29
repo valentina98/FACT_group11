@@ -183,28 +183,6 @@ def extract_frame_data(sentence):
             frame_data.append(annSet.frameName)
     return frame_data
 
-def get_framenet_sentences():
-    sentences_with_frames = {}
-    all_sentences = []
-    print(len(fn.frames()))
-    for frame in fn.frames():
-        frame_name = frame.name
-        sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
-
-        for lu_name, lu in frame.lexUnit.items():
-            lu_id = lu.ID
-            lu_object = fn.lu(lu_id)
-            for exemplar in lu_object.exemplars:
-                sentence_text = exemplar.text
-                sentences_with_frames[frame_name]['positive'].append(sentence_text)
-                #print("Frame name: " +  str(frame_name) + " text: " + sentence_text)
-                all_sentences.append(sentence_text)
-    for frame, data in sentences_with_frames.items():
-        negative_samples = [s for s in all_sentences if s not in data['positive']]
-        sentences_with_frames[frame]['negative'] = negative_samples
-
-    return sentences_with_frames
-
 def collate_fn(batch):
     input_ids = [item['input_ids'] for item in batch]
     attention_mask = [item['attention_mask'] for item in batch]
@@ -219,7 +197,8 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     np.random.seed(seed)
     concept_loaders = {}
 
-    frame_data = get_framenet_sentences()
+    with open('data/framenet_sentences.pkl', 'rb') as file:
+        frame_data = pickle.load(file)
     for frame, data in frame_data.items():
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = np.random.choice(data['negative'], n_samples, replace=len(data['negative']) < n_samples)
