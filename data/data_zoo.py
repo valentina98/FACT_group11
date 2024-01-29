@@ -115,9 +115,11 @@ def get_dataset(args, preprocess=None):
                           'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
                           'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
                           'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
+        
+        co_ocurring_classes = ['dining table', 'person', 'fruit', 'road', 'plant vase', 'oven', 'mouse', 'building', 'ceiling', 'drier towel']
 
-        from .coco_stuff_data import load_coco_stuff_data
-        train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, biased_classes, 500, 250)
+        from .coco_stuff_data import load_coco_stuff_data_multilabel
+        train_loader, test_loader, idx_to_class = load_coco_stuff_data_multilabel(args, biased_classes + co_ocurring_classes, 500, 250)
 
     else:
         raise ValueError(args.dataset)

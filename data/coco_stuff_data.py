@@ -6,6 +6,7 @@ import fiftyone as fo
 import fiftyone.zoo as foz
 from fiftyone import ViewField as F
 
+
 class CocoStuffDataset(Dataset):
     def __init__(self, filepaths, labels, transform=None):
         self.filepaths = filepaths
@@ -17,13 +18,11 @@ class CocoStuffDataset(Dataset):
 
     def __getitem__(self, idx):
         image = Image.open(self.filepaths[idx]).convert('RGB')
-        label = self.labels[idx]
-
         if self.transform:
             image = self.transform(image)
-
-        return image, torch.tensor(label)
-
+        label = self.labels[idx]
+        return image, label
+    
 def sample_or_upsample(dataset_view, num_samples, seed):
     # Sample
     sampled_filepaths = [sample.filepath for sample in dataset_view.take(num_samples, seed)]
@@ -92,5 +91,62 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
 
     idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
+
+    return train_loader, val_loader, idx_to_class
+
+def create_multilabels(dataset_view, classes):
+    multilabels = []
+    for sample in dataset_view:
+        label_vector = [0] * len(classes)
+        for detection in sample.detections.detections:
+            if detection.label in classes:
+                label_vector[classes.index(detection.label)] = 1
+        multilabels.append(label_vector)
+    return multilabels
+
+def load_coco_stuff_data_multilabel(args, classes, num_train_samples_per_class=500, num_val_samples_per_class=250):
+    """
+    Loads the COCO dataset for multi-label classification. It processes the dataset to create binary label vectors 
+    for each image, where each vector element represents the presence or absence of a class from the biased_classes list.
+
+    This function first loads the COCO dataset using FiftyOne, with a focus on the specified classes (biased_classes).
+    It then processes the dataset to create binary label vectors for multi-label classification, where each label vector
+    corresponds to the classes in classes. The function finally returns DataLoader objects for both the training
+    and validation datasets, which provide batches of images and their corresponding multi-label vectors.
+
+    Args:
+    - args: A namespace object containing arguments like batch size and seed.
+    - classes (List[str]): A list of class names to focus on in the dataset.
+    - num_train_samples_per_class (int): The number of training samples to load for each class.
+    - num_val_samples_per_class (int): The number of validation samples to load for each class.
+
+    Returns:
+    - train_loader (DataLoader): A DataLoader for the training dataset.
+    - val_loader (DataLoader): A DataLoader for the validation dataset.
+    - idx_to_class (Dict[int, str]): A mapping from class indices to class names.
+    """
+
+    preprocess = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    train_dataset = foz.load_zoo_dataset("coco-2017", split="train", label_types=["detections"], classes=biased_classes, max_samples=num_train_samples_per_class*len(biased_classes))
+    val_dataset = foz.load_zoo_dataset("coco-2017", split="validation", label_types=["detections"], classes=biased_classes, max_samples=num_val_samples_per_class*len(biased_classes))
+
+    train_filepaths = [sample.filepath for sample in train_dataset]
+    val_filepaths = [sample.filepath for sample in val_dataset]
+
+    train_multilabels = create_multilabels(train_dataset, classes)
+    val_multilabels = create_multilabels(val_dataset, classes)
+
+    train_data = CocoStuffDataset(train_filepaths, train_multilabels, transform=preprocess)
+    val_data = CocoStuffDataset(val_filepaths, val_multilabels, transform=preprocess)
+
+    train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
+
+    idx_to_class = {i: class_name for i, class_name in enumerate(classes)}
 
     return train_loader, val_loader, idx_to_class
