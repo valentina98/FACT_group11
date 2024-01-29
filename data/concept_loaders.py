@@ -186,13 +186,12 @@ def extract_frame_data(sentence):
 def get_framenet_sentences():
     sentences_with_frames = {}
     all_sentences = []
-
+    print(len(fn.frames()))
     for frame in fn.frames():
         frame_name = frame.name
         sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
 
         for lu_name, lu in frame.lexUnit.items():
-            print(len(frame.lexUnit.items()))
             lu_id = lu.ID
             lu_object = fn.lu(lu_id)
             for exemplar in lu_object.exemplars:
