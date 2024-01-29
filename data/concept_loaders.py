@@ -192,9 +192,9 @@ def get_framenet_sentences():
         sentences_with_frames[frame_name] = {'positive': [], 'negative': []}
 
         for lu_name, lu in frame.lexUnit.items():
+            print(len(frame.lexUnit.items()))
             lu_id = lu.ID
             lu_object = fn.lu(lu_id)
-            print(len(lu_object.exemplars))
             for exemplar in lu_object.exemplars:
                 sentence_text = exemplar.text
                 sentences_with_frames[frame_name]['positive'].append(sentence_text)
