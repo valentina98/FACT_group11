@@ -36,7 +36,7 @@ def get_single_concept_data(cls_name,type="image"):
     
     all_concepts = []
     cls_name = cls_name.lower()
-    if type == "nlpss":
+    if type == "nlp":
         
         # RelatedTo relations
         related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
@@ -55,37 +55,54 @@ def get_single_concept_data(cls_name,type="image"):
         obj = requests.get(usedfor_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
-    # Has relations
-    has_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasA&start=/c/en/{}"
-    obj = requests.get(has_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['end']['label'])
-    
-    # Made of relations
-    madeof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MadeOf&start=/c/en/{}"
-    obj = requests.get(madeof_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['end']['label'])
-    
-    # Properties of things
-    property_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasProperty&start=/c/en/{}"
-    obj = requests.get(property_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['end']['label'])
-    
-    # Categorization concepts
-    is_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
-    obj = requests.get(is_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        if edge["weight"] <= 1:
-            continue
-        all_concepts.append(edge['end']['label'])
-    
-    # Parts of things
-    parts_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&end=/c/en/{}"
-    obj = requests.get(parts_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['start']['label'])
+
+        formof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/FormOf&start=/c/en/{}"
+        obj = requests.get(formof_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        isa_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
+        obj = requests.get(isa_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        atlocation_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/AtLocation&start=/c/en/{}"
+        obj = requests.get(atlocation_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+    else:
+        # Has relations
+        has_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasA&start=/c/en/{}"
+        obj = requests.get(has_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        # Made of relations
+        madeof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MadeOf&start=/c/en/{}"
+        obj = requests.get(madeof_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        # Properties of things
+        property_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasProperty&start=/c/en/{}"
+        obj = requests.get(property_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        # Categorization concepts
+        is_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
+        obj = requests.get(is_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            if edge["weight"] <= 1:
+                continue
+            all_concepts.append(edge['end']['label'])
+        
+        # Parts of things
+        parts_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&end=/c/en/{}"
+        obj = requests.get(parts_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['start']['label'])
     
     all_concepts = [c.lower() for c in all_concepts]
     # Drop the "a " for concepts defined like "a {concept}".
