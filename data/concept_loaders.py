@@ -226,6 +226,7 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     concept_loaders = {}
     combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
     for frame, data in combined_data.items():
+        print(frame)
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = generate_negative_samples(combined_data, frame, n_samples)
 
