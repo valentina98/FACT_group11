@@ -229,8 +229,8 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
         pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
         neg_samples = generate_negative_samples(combined_data, frame, n_samples)
 
-        pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer, preprocess=preprocess)
-        neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer, preprocess=preprocess)
+        pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer)
+        neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer)
 
         pos_loader = DataLoader(pos_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
         neg_loader = DataLoader(neg_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
