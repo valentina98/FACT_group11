@@ -1,5 +1,6 @@
 import pickle
 import nltk
+import gzip
 from nltk.corpus import framenet as fn
 nltk.download('framenet_v17')
 
@@ -23,7 +24,7 @@ def get_framenet_sentences():
         negative_samples = [s for s in all_sentences if s not in data['positive']]
         sentences_with_frames[frame]['negative'] = negative_samples
 
-    with open('framenet_sentences.pkl', 'wb') as file:
+    with gzip.open('framenet_sentences.pkl', 'wb') as file:
         pickle.dump(sentences_with_frames, file)
 
 def main():
