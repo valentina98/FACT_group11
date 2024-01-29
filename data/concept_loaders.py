@@ -196,6 +196,7 @@ def collate_fn(batch):
 def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     np.random.seed(seed)
     concept_loaders = {}
+    print("here")
     frame_data = None
     with open('data/framenet_sentences.pkl', 'rb') as file:
         frame_data = pickle.load(file)
