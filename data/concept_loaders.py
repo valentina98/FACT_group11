@@ -187,7 +187,6 @@ def extract_frame_data(sentence):
     return frame_data
 
 def collate_fn(batch):
-    # Unzip the batch to separate input_ids and attention_masks
     input_ids, attention_masks = zip(*batch)
 
     input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
@@ -198,7 +197,7 @@ def collate_fn(batch):
 def load_all_data(chunks_dir):
     combined_data = {}
 
-    chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')][:2]
+    chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')]
     
     for chunk_file in chunk_files:
         file_path = os.path.join(chunks_dir, chunk_file)
