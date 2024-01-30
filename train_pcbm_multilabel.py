@@ -29,11 +29,14 @@ def config():
     return parser.parse_args()
 
 
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.metrics import average_precision_score
+
 def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
-    # Use OneVsRestClassifier with SGDClassifier for multi-label classification
+    # Use OneVsRestClassifier for multi-label tasks
     classifier = OneVsRestClassifier(SGDClassifier(
         random_state=args.seed, loss="log_loss",
         alpha=args.lam, l1_ratio=args.alpha, verbose=0,
@@ -41,20 +44,31 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     ))
     classifier.fit(train_features, train_labels)
 
-    # Calculate mAP for the training data
+    # Get probabilities for each class
     train_probabilities = classifier.predict_proba(train_features)
-    train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
-
-    # Calculate mAP for the testing data
     test_probabilities = classifier.predict_proba(test_features)
+
+
+    print("Train labels shape:", np.array(train_labels).shape)
+    print("Train probabilities shape:", train_probabilities.shape)
+    print("Test labels shape:", np.array(test_labels).shape)
+    print("Test probabilities shape:", test_probabilities.shape)
+
+    train_labels = np.array(train_labels).astype(np.float32)
+    test_labels = np.array(test_labels).astype(np.float32)
+
+
+    # Calculate mAP
+    train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
     test_mAP = average_precision_score(test_labels, test_probabilities, average="macro")
 
     run_info = {
         "train_mAP": train_mAP,
         "test_mAP": test_mAP
     }
-    
+
     return run_info, classifier.coef_, classifier.intercept_
+
 
 
 
