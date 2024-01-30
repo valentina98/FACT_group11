@@ -104,8 +104,12 @@ def get_text_embeddings(loader, model, device="cuda"):
     embeddings = None
 
     for batch in tqdm(loader):
-        input_ids = batch['input_ids'].to(device)
-        attention_mask = batch['attention_mask'].to(device)
+        # Accessing tuple elements
+        input_ids, attention_mask = batch
+
+        # Move to device
+        input_ids = input_ids.to(device)
+        attention_mask = attention_mask.to(device)
 
         # Get model embeddings (or outputs)
         batch_emb = model(input_ids, attention_mask=attention_mask)[0].squeeze().detach().cpu().numpy()
