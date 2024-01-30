@@ -90,36 +90,21 @@ def get_embeddings(loader, model, device="cuda"):
 
 @torch.no_grad()
 def get_text_embeddings(loader, model, device="cuda"):
-    """
-    Args:
-        loader (torch.utils.data.DataLoader): Data loader returning tokenized text data.
-        model (nn.Module): Text-based model (e.g., BERT).
-        device (str, optional): Device to use. Defaults to "cuda".
-
-    Returns:
-        np.array: Embeddings as a numpy array.
-    """
     model = model.to(device)
-    model.eval()  # Set model to evaluation mode
-    embeddings = None
+    model.eval()
+    embeddings = []
 
     for batch in tqdm(loader):
-        # Accessing tuple elements
         input_ids, attention_mask = batch
-
-        # Move to device
         input_ids = input_ids.to(device)
         attention_mask = attention_mask.to(device)
 
-        # Get model embeddings (or outputs)
-        batch_emb = model(input_ids, attention_mask=attention_mask)[0].squeeze().detach().cpu().numpy()
-        
-        if embeddings is None:
-            embeddings = batch_emb
-        else:
-            embeddings = np.concatenate([embeddings, batch_emb], axis=0)
+        # Get model outputs and take the embedding of the first token ([CLS])
+        model_output = model(input_ids, attention_mask=attention_mask)
+        cls_embeddings = model_output[0][:, 0, :].detach().cpu().numpy()  # Taking the [CLS] token embedding
+        embeddings.append(cls_embeddings)
 
-    return embeddings
+    return np.concatenate(embeddings, axis=0)
 
 
 def get_cavs(X_train, y_train, X_val, y_val, C):
