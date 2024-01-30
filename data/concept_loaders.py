@@ -184,14 +184,14 @@ def extract_frame_data(sentence):
     return frame_data
 
 def collate_fn(batch):
-    input_ids = [item['input_ids'] for item in batch]
-    attention_mask = [item['attention_mask'] for item in batch]
+    input_ids = [torch.tensor(item[0]) for item in batch]
+    attention_masks = [torch.tensor(item[1]) for item in batch]
 
-    # Pad sequences
+    # Pad the sequences
     input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
-    attention_mask = torch.nn.utils.rnn.pad_sequence(attention_mask, batch_first=True, padding_value=0)
+    attention_masks = torch.nn.utils.rnn.pad_sequence(attention_masks, batch_first=True, padding_value=0)
 
-    return {"input_ids": input_ids, "attention_mask": attention_mask}
+    return input_ids, attention_masks
 
 def load_all_data(chunks_dir):
     combined_data = {}
