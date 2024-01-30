@@ -29,27 +29,27 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     return parser.parse_args()
 
-def compute_class_wise_AP(features, labels_binary, classifier, num_classes):
+def compute_class_wise_AP(classifier, features, labels_binary, num_classes):
     AP_scores = []
-
-    # Convert multi-class labels to binary labels (one-vs-rest)
-    # labels_binary = label_binarize(labels, classes=range(num_classes))
+    
+    # Fit the OneVsRestClassifier
+    classifier.fit(features, labels_binary)
 
     for i in range(num_classes):
         # Extract binary labels for the current class
         binary_labels = labels_binary[:, i]
 
-        # Train classifier for the current binary label
-        classifier.fit(features, binary_labels)
+        # Extract the classifier for the current class
+        class_classifier = classifier.estimators_[i]
 
         # Compute probabilities for the positive class
-        probabilities = classifier.predict_proba(features)[:, 1]
+        probabilities = class_classifier.predict_proba(features)[:, 1]
 
         # Compute AP for the current class and append to the list
         AP = average_precision_score(binary_labels, probabilities)
         AP_scores.append(AP)
 
-    return np.mean(AP_scores)  # Return the mean of AP scores across all classes
+    return np.mean(AP_scores) 
 
 def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
@@ -61,7 +61,7 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         alpha=args.lam, l1_ratio=args.alpha, verbose=0,
         penalty="elasticnet", max_iter=10000
     ))
-    classifier.fit(train_features, train_labels)
+    # classifier.fit(train_features, train_labels)
  
     run_info = {}
 
