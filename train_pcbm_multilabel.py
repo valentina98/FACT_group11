@@ -115,9 +115,9 @@ def main(args, concept_bank, backbone, preprocess):
         pickle.dump(run_info, f)
 
     
-    if num_classes > 1:
-        # Prints the Top-5 Concept Weigths for each class.
-        print(posthoc_layer.analyze_classifier(k=5))
+    # if num_classes > 1:
+    #     # Prints the Top-5 Concept Weigths for each class.
+    #     print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")
     print(run_info)
