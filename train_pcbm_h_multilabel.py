@@ -76,6 +76,10 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device)
             optimizer.zero_grad()
             out, projections = posthoc_layer(batch_X, return_dist=True)
+            
+            # ??
+            batch_Y = batch_Y.float()
+
             cls_loss = cls_criterion(out, batch_Y)
             loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifier.weight**2).mean()
             loss.backward()
