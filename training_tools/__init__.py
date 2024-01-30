@@ -24,8 +24,7 @@ class MetricComputer(object):
     def __init__(self, metric_names=None, n_classes=5):
         __all_metrics__ = {"accuracy": self._accuracy, 
                             "class-level-accuracy": self._class_level_accuracy,
-                            "confusion_matrix": self._confusion_matrix,
-                            "mean_average_precision": self._mean_average_precision}
+                            "confusion_matrix": self._confusion_matrix}
         all_names = list(__all_metrics__.keys())
         if metric_names is None:
             metric_names = all_names
