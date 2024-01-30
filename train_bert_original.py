@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from data import get_dataset
+import argparse
 
 def config():
     parser = argparse.ArgumentParser()
@@ -52,7 +53,7 @@ def main(args,train_loader, test_loader, num_labels, device, epochs=10):
     return accuracy
 
 if __name__ == "__main__":
-    args = config
+    args = config()
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     train_loader, test_loader, _, _ = get_dataset(args)
