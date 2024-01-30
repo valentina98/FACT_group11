@@ -44,10 +44,10 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     for batch_X, batch_Y in tqdm_loader:
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
         out = posthoc_layer(batch_X)            
-        all_preds.append(out.detach().cpu().numpy())
+        all_preds.append(torch.sigmoid(out).detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
         metrics = computer(out, batch_Y) 
-        epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
+        # epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
         epoch_summary["mAP"].update(metrics["mean_average_precision"], batch_X.shape[0])
         summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
         tqdm_loader.set_description("Eval - " + " ".join(summary_text))
