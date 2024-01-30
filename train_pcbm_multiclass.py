@@ -29,11 +29,11 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     return parser.parse_args()
 
-def compute_class_wise_AP(features, labels, classifier, num_classes):
+def compute_class_wise_AP(features, labels_binary, classifier, num_classes):
     AP_scores = []
 
     # Convert multi-class labels to binary labels (one-vs-rest)
-    labels_binary = label_binarize(labels, classes=range(num_classes))
+    # labels_binary = label_binarize(labels, classes=range(num_classes))
 
     for i in range(num_classes):
         # Extract binary labels for the current class
