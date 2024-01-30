@@ -17,46 +17,56 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     return parser.parse_args()
 
-def main(args,train_loader, test_loader, num_labels, device, epochs=10):
-    # Initialize model
+def main(args,train_loader, test_loader, classes, epochs=10):
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+    num_labels = len(classes)
+
     model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=num_labels)
     model.to(device)
+
     optim = AdamW(model.parameters(), lr=5e-5)
 
-    # Training
-    model.train()
-    for epoch in range(epochs):
-        for batch in tqdm(train_loader):
-            optim.zero_grad()
-            input_ids = batch['input_ids'].to(device)
-            attention_mask = batch['attention_mask'].to(device)
-            labels = batch['labels'].to(device)
+    for epoch in range(epochs):  # You can adjust the number of epochs
+        model.train()
+        for texts, labels in tqdm(train_loader):
+            labels = labels.to(device)
+
+            encodings = tokenizer(texts, padding=True, truncation=True, max_length=512, return_tensors='pt')
+            input_ids = encodings['input_ids'].to(device)
+            attention_mask = encodings['attention_mask'].to(device)
+
             outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
             loss = outputs.loss
             loss.backward()
             optim.step()
+            optim.zero_grad()
 
-    # Evaluation
     model.eval()
     predictions, true_labels = [], []
     with torch.no_grad():
-        for batch in tqdm(test_loader):
-            input_ids = batch['input_ids'].to(device)
-            attention_mask = batch['attention_mask'].to(device)
-            labels = batch['labels'].to(device)
-            outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+        for texts, labels in tqdm(test_loader):
+            labels = labels.to(device)
+
+            # Tokenize the texts in the batch
+            encodings = tokenizer(texts, padding=True, truncation=True, max_length=512, return_tensors='pt')
+            input_ids = encodings['input_ids'].to(device)
+            attention_mask = encodings['attention_mask'].to(device)
+
+            # Forward pass
+            outputs = model(input_ids, attention_mask=attention_mask)
             logits = outputs.logits
             predictions.extend(logits.argmax(dim=-1).cpu().numpy())
             true_labels.extend(labels.cpu().numpy())
 
     accuracy = accuracy_score(true_labels, predictions)
-    return accuracy
+    print(f"Accuracy: {accuracy}")
 
 if __name__ == "__main__":
     args = config()
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-    train_loader, test_loader, _, _ = get_dataset(args)
+    train_loader, test_loader, _, classes = get_dataset(args)
     num_labels = len(train_loader.dataset.labels.unique())
-    accuracy = main(args,train_loader, test_loader, num_labels, device)
+    accuracy = main(args,train_loader, test_loader, classes, device)
     print(f"Accuracy: {accuracy}")
