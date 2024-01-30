@@ -15,10 +15,11 @@ def config():
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--batch-size", default=16, type=int)
-    parser.add_argument("--num-workers", default=4, type=int)
+    parser.add_argument("--num-workers", default=2, type=int)
+    parser.add_argument("--epochs", default=3, type=int)
     return parser.parse_args()
 
-def main(args,train_loader, test_loader, classes, epochs=10):
+def main(args,train_loader, test_loader, classes):
 
     device = args.device
 
@@ -30,6 +31,8 @@ def main(args,train_loader, test_loader, classes, epochs=10):
     model.to(device)
 
     optim = AdamW(model.parameters(), lr=5e-5)
+
+    epochs = args.epochs
 
     for epoch in range(epochs):  # You can adjust the number of epochs
         model.train()
