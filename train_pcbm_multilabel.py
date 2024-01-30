@@ -36,6 +36,9 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
+    print("Train labels shape:", np.array(train_labels).shape)
+    print("Test labels shape:", np.array(test_labels).shape)
+    
     # Use OneVsRestClassifier for multi-label tasks
     classifier = OneVsRestClassifier(SGDClassifier(
         random_state=args.seed, loss="log_loss",
@@ -49,9 +52,7 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     test_probabilities = classifier.predict_proba(test_features)
 
 
-    print("Train labels shape:", np.array(train_labels).shape)
     print("Train probabilities shape:", train_probabilities.shape)
-    print("Test labels shape:", np.array(test_labels).shape)
     print("Test probabilities shape:", test_probabilities.shape)
 
     train_labels = np.array(train_labels).astype(np.float32)
