@@ -69,8 +69,7 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
 
     # If it's a multi-label task, compute mAP
-    elif num_classes > 2:
-    # and test_labels.ndim > 1:
+    elif num_classes > 2 and test_labels.ndim > 1:
         train_probabilities = classifier.predict_proba(train_features)
         train_mAP = average_precision_score(train_labels, train_probabilities)
         run_info["train_mAP"] = train_mAP
@@ -100,7 +99,7 @@ def main(args, concept_bank, backbone, preprocess):
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
-    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), num_classes)
+    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
