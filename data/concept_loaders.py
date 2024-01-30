@@ -184,12 +184,17 @@ def extract_frame_data(sentence):
     return frame_data
 
 def collate_fn(batch):
-    input_ids = [torch.tensor(item[0]) for item in batch]
-    attention_masks = [torch.tensor(item[1]) for item in batch]
+    # Extracting input_ids and attention_masks from the batch
+    input_ids = [item[0] for item in batch]
+    attention_masks = [item[1] for item in batch]
 
-    # Pad the sequences
-    input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
-    attention_masks = torch.nn.utils.rnn.pad_sequence(attention_masks, batch_first=True, padding_value=0)
+    # Convert lists to tensors
+    input_ids = torch.tensor(input_ids, dtype=torch.long)
+    attention_masks = torch.tensor(attention_masks, dtype=torch.long)
+
+    # Padding might be necessary depending on your model requirements
+    # input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+    # attention_masks = torch.nn.utils.rnn.pad_sequence(attention_masks, batch_first=True, padding_value=0)
 
     return input_ids, attention_masks
 
