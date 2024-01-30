@@ -44,7 +44,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     for batch_X, batch_Y in tqdm_loader:
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
         out = posthoc_layer(batch_X)            
-        all_preds.append(torch.sigmoid(out).detach().cpu().numpy())
+        all_preds.append(out.detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
         metrics = computer(out, batch_Y) 
         epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
@@ -64,7 +64,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
 
 
 def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_classes):
-    cls_criterion = nn.CrossEntropyLoss()
+    cls_criterion = nn.BCEWithLogitsLoss()  # Use BCEWithLogitsLoss for multi-label classification
     for epoch in range(1, args.num_epochs+1):
         print(f"Epoch: {epoch}")
         epoch_summary = {"CELoss": AverageMeter(), "Accuracy": AverageMeter(), "mAP": AverageMeter()}
