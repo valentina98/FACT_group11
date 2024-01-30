@@ -13,7 +13,7 @@ from sklearn.metrics import roc_auc_score
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, PosthocHybridCBM, get_model
-from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
+from training_tools import load_or_compute_projections, AverageMeter, MetricComputerMAP
 
 
 
@@ -37,7 +37,7 @@ def config():
 def eval_model(args, posthoc_layer, loader, num_classes):
     epoch_summary = {"Accuracy": AverageMeter(), "mAP": AverageMeter()}
     tqdm_loader = tqdm(loader)
-    computer = MetricComputer(n_classes=num_classes)
+    computer = MetricComputerMAP(n_classes=num_classes)
     all_preds = []
     all_labels = []
     
@@ -69,7 +69,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         print(f"Epoch: {epoch}")
         epoch_summary = {"CELoss": AverageMeter(), "Accuracy": AverageMeter(), "mAP": AverageMeter()}
         tqdm_loader = tqdm(train_loader)
-        computer = MetricComputer(n_classes=num_classes)
+        computer = MetricComputerMAP(n_classes=num_classes)
         all_train_preds = []
         all_train_labels = []
         for batch_X, batch_Y in tqdm_loader:
@@ -102,7 +102,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             "train_metrics": epoch_summary,
             "test_metrics": eval_model(args, posthoc_layer, val_loader, num_classes)
         }
-        print("Final test metrics: ", latest_info["test_metrics"])
+        print("Final test metrics: ", latest_info["test_metrics"]["test_acc"].avg, latest_info["test_metrics"]["mAP"].avg)
 
     return latest_info
 

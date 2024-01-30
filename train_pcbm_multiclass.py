@@ -70,7 +70,11 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         run_info["train_mAP"] = compute_class_wise_AP(classifier, train_features, train_labels, num_classes)
         run_info["test_mAP"] = compute_class_wise_AP(classifier, test_features, test_labels, num_classes)
 
-    return run_info, classifier.coef_, classifier.intercept_
+    # Access the coefficients and intercepts
+    coefs = [est.coef_ for est in classifier.estimators_]
+    intercepts = [est.intercept_ for est in classifier.estimators_]
+
+    return run_info, coefs, intercepts
 
 
 def main(args, concept_bank, backbone, preprocess):
