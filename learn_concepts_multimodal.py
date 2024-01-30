@@ -69,7 +69,7 @@ def get_single_concept_data(cls_name,type="image"):
         obj = requests.get(atlocation_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
-            
+
         partof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&start=/c/en/{}"
         obj = requests.get(partof_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
@@ -79,7 +79,22 @@ def get_single_concept_data(cls_name,type="image"):
         obj = requests.get(hascontext_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
+ 
+        causes_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Causes&start=/c/en/{}"
+        obj = requests.get(causes_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        hassubevent_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasSubevent&start=/c/en/{}"
+        obj = requests.get(hassubevent_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
         
+        motivatedbygoal_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MotivatedByGoal&start=/c/en/{}"
+        obj = requests.get(motivatedbygoal_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
     else:
         # Has relations
         has_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasA&start=/c/en/{}"
