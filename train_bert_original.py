@@ -1,12 +1,13 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
-from transformers import BertTokenizer, BertForSequenceClassification, AdamW
+from transformers import BertTokenizer, BertForSequenceClassification
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from data import get_dataset
 import argparse
+from torch.optim import AdamW
 
 def config():
     parser = argparse.ArgumentParser()
@@ -18,6 +19,9 @@ def config():
     return parser.parse_args()
 
 def main(args,train_loader, test_loader, classes, epochs=10):
+
+    device = args.device
+
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
     num_labels = len(classes)
@@ -64,9 +68,8 @@ def main(args,train_loader, test_loader, classes, epochs=10):
 
 if __name__ == "__main__":
     args = config()
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     train_loader, test_loader, _, classes = get_dataset(args)
     num_labels = len(train_loader.dataset.labels.unique())
-    accuracy = main(args,train_loader, test_loader, classes, device)
+    accuracy = main(args,train_loader, test_loader, classes)
     print(f"Accuracy: {accuracy}")
