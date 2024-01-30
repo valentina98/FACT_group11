@@ -16,7 +16,7 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     return parser.parse_args()
 
-def main(train_loader, test_loader, num_labels, device, epochs=10):
+def main(args,train_loader, test_loader, num_labels, device, epochs=10):
     # Initialize model
     model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=num_labels)
     model.to(device)
@@ -57,5 +57,5 @@ if __name__ == "__main__":
 
     train_loader, test_loader, _, _ = get_dataset(args)
     num_labels = len(train_loader.dataset.labels.unique())
-    accuracy = main(train_loader, test_loader, num_labels, device)
+    accuracy = main(args,train_loader, test_loader, num_labels, device)
     print(f"Accuracy: {accuracy}")
