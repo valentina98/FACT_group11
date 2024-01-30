@@ -55,9 +55,14 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     print("Train probabilities shape:", train_probabilities.shape)
     print("Test probabilities shape:", test_probabilities.shape)
 
-    train_labels = np.array(train_labels).astype(np.float32)
-    test_labels = np.array(test_labels).astype(np.float32)
+    # train_labels = np.array(train_labels).astype(np.float32)
+    # test_labels = np.array(test_labels).astype(np.float32)
 
+    classifier.fit(train_features, train_labels)
+
+    # Get probabilities for each class
+    train_probabilities = classifier.predict_proba(train_features)
+    test_probabilities = classifier.predict_proba(test_features)
 
     # Calculate mAP
     train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
@@ -68,7 +73,11 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         "test_mAP": test_mAP
     }
 
-    return run_info, classifier.coef_, classifier.intercept_
+    # Access the coefficients and intercepts
+    coefs = [est.coef_ for est in classifier.estimators_]
+    intercepts = [est.intercept_ for est in classifier.estimators_]
+
+    return run_info, coefs, intercepts
 
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
