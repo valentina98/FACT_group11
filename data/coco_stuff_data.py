@@ -104,7 +104,7 @@ def create_multilabels(dataset_view, classes):
         multilabels.append(label_vector)
     return multilabels
 
-def load_coco_stuff_data_multilabel(args, classes, num_train_samples_per_class=500, num_val_samples_per_class=250):
+def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_class=500, num_val_samples_per_class=250):
     """
     Loads the COCO dataset for multi-label classification. It processes the dataset to create binary label vectors 
     for each image, where each vector element represents the presence or absence of a class from the biased_classes list.
@@ -116,7 +116,7 @@ def load_coco_stuff_data_multilabel(args, classes, num_train_samples_per_class=5
 
     Args:
     - args: A namespace object containing arguments like batch size and seed.
-    - classes (List[str]): A list of class names to focus on in the dataset.
+    - biased_classes (List[str]): A list of class names to focus on in the dataset.
     - num_train_samples_per_class (int): The number of training samples to load for each class.
     - num_val_samples_per_class (int): The number of validation samples to load for each class.
 
@@ -138,8 +138,8 @@ def load_coco_stuff_data_multilabel(args, classes, num_train_samples_per_class=5
     train_filepaths = [sample.filepath for sample in train_dataset]
     val_filepaths = [sample.filepath for sample in val_dataset]
 
-    train_multilabels = create_multilabels(train_dataset, classes)
-    val_multilabels = create_multilabels(val_dataset, classes)
+    train_multilabels = create_multilabels(train_dataset, biased_classes)
+    val_multilabels = create_multilabels(val_dataset, biased_classes)
 
     train_data = CocoStuffDataset(train_filepaths, train_multilabels, transform=preprocess)
     val_data = CocoStuffDataset(val_filepaths, val_multilabels, transform=preprocess)
@@ -147,6 +147,6 @@ def load_coco_stuff_data_multilabel(args, classes, num_train_samples_per_class=5
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
 
-    idx_to_class = {i: class_name for i, class_name in enumerate(classes)}
+    idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
 
     return train_loader, val_loader, idx_to_class
