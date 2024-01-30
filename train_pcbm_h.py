@@ -90,7 +90,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["args"] = args
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"])
+        print("Final test acc: ", latest_info["test_acc"].avg)
     return latest_info
 
 
