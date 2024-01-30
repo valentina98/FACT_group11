@@ -21,7 +21,7 @@ class CocoStuffDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         label = self.labels[idx]
-        return image, label
+        return image, torch.tensor(label)
     
 def sample_or_upsample(dataset_view, num_samples, seed):
     # Sample
@@ -98,6 +98,7 @@ def create_multilabels(dataset_view, classes):
     multilabels = []
     for sample in dataset_view:
         label_vector = [0] * len(classes)
+        print('sample.field_names', sample.field_names)
         for detection in sample.detections.detections:
             if detection.label in classes:
                 label_vector[classes.index(detection.label)] = 1
