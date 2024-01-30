@@ -146,6 +146,12 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
 
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
+    
+    for images, labels in train_loader:
+        print("Batch images shape:", images.shape)
+        print("Batch labels shape:", labels.shape)
+        break
+
 
     idx_to_class = {i: class_name for i, class_name in enumerate(biased_classes)}
 

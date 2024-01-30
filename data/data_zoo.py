@@ -116,6 +116,16 @@ def get_dataset(args, preprocess=None):
                           'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
                           'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
         
+        from .coco_stuff_data import load_coco_stuff_data
+        train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, biased_classes, 500, 250)
+
+    elif args.dataset == "coco_stuff_multilabel":
+        # The list of 20 biased COCO classes discussed in the paper https://arxiv.org/pdf/2001.03152.pdf         
+        biased_classes = ['cup', 'wine glass', 'handbag', 'apple', 'car', 'bus', 
+                          'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
+                          'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
+                          'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
+        
         # co_ocurring_classes = ['dining table', 'person', 'fruit', 'road', 'plant vase', 'oven', 'mouse', 'building', 'ceiling', 'drier towel']
 
         from .coco_stuff_data import load_coco_stuff_data_multilabel

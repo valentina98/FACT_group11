@@ -3,15 +3,16 @@ import os
 import pickle
 import numpy as np
 import torch
-from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import label_binarize
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import roc_auc_score
 
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, get_model
 from training_tools import load_or_compute_projections
-
 
 def config():
     parser = argparse.ArgumentParser()
@@ -28,47 +29,49 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     return parser.parse_args()
 
+def compute_class_wise_AP(features, labels, classifier, num_classes):
+    AP_scores = []
 
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.metrics import average_precision_score
+    # Convert multi-class labels to binary labels (one-vs-rest)
+    labels_binary = label_binarize(labels, classes=range(num_classes))
+
+    for i in range(num_classes):
+        # Extract binary labels for the current class
+        binary_labels = labels_binary[:, i]
+
+        # Train classifier for the current binary label
+        classifier.fit(features, binary_labels)
+
+        # Compute probabilities for the positive class
+        probabilities = classifier.predict_proba(features)[:, 1]
+
+        # Compute AP for the current class and append to the list
+        AP = average_precision_score(binary_labels, probabilities)
+        AP_scores.append(AP)
+
+    return np.mean(AP_scores)  # Return the mean of AP scores across all classes
 
 def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
-    print("Train labels shape:", np.array(train_labels).shape)
-    print("Test labels shape:", np.array(test_labels).shape)
-
-    # Use OneVsRestClassifier for multi-label tasks
+    # Initialize the OneVsRestClassifier with SGDClassifier
     classifier = OneVsRestClassifier(SGDClassifier(
         random_state=args.seed, loss="log_loss",
         alpha=args.lam, l1_ratio=args.alpha, verbose=0,
         penalty="elasticnet", max_iter=10000
     ))
     classifier.fit(train_features, train_labels)
+ 
+    run_info = {}
 
-    # Get probabilities for each class
-    train_probabilities = classifier.predict_proba(train_features)
-    test_probabilities = classifier.predict_proba(test_features)
-
-
-    print("Train probabilities shape:", train_probabilities.shape)
-    print("Test probabilities shape:", test_probabilities.shape)
-
-    train_labels = np.array(train_labels).astype(np.float32)
-    test_labels = np.array(test_labels).astype(np.float32)
-
-
-    # Calculate mAP
-    train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
-    test_mAP = average_precision_score(test_labels, test_probabilities, average="macro")
-
-    run_info = {
-        "train_mAP": train_mAP,
-        "test_mAP": test_mAP
-    }
+    # If it's a multi-class task, compute mAP using OneVsRest approach
+    if num_classes > 2:
+        run_info["train_mAP"] = compute_class_wise_AP(classifier, train_features, train_labels, num_classes)
+        run_info["test_mAP"] = compute_class_wise_AP(classifier, test_features, test_labels, num_classes)
 
     return run_info, classifier.coef_, classifier.intercept_
+
 
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)

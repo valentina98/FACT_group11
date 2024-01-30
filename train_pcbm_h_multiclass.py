@@ -35,40 +35,44 @@ def config():
 
 @torch.no_grad()
 def eval_model(args, posthoc_layer, loader, num_classes):
-    epoch_summary = {"Accuracy": AverageMeter()}
+    epoch_summary = {"Accuracy": AverageMeter(), "mAP": AverageMeter()}
     tqdm_loader = tqdm(loader)
     computer = MetricComputer(n_classes=num_classes)
     all_preds = []
     all_labels = []
     
-    for batch_X, batch_Y in tqdm(loader):
+    for batch_X, batch_Y in tqdm_loader:
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
         out = posthoc_layer(batch_X)            
-        all_preds.append(out.detach().cpu().numpy())
+        all_preds.append(torch.sigmoid(out).detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
         metrics = computer(out, batch_Y) 
-        epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
+        # epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
+        epoch_summary["mAP"].update(metrics["mean_average_precision"], batch_X.shape[0])
         summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
-        summary_text = "Eval - " + " ".join(summary_text)
-        tqdm_loader.set_description(summary_text)
+        tqdm_loader.set_description("Eval - " + " ".join(summary_text))
     
     all_preds = np.concatenate(all_preds, axis=0)
     all_labels = np.concatenate(all_labels, axis=0)
+    
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
-        return auc
-    return epoch_summary["Accuracy"]
+        epoch_summary["AUC"] = auc
+        return epoch_summary
+    
+    return epoch_summary
 
 
 def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_classes):
     cls_criterion = nn.CrossEntropyLoss()
     for epoch in range(1, args.num_epochs+1):
         print(f"Epoch: {epoch}")
-        epoch_summary = {"CELoss": AverageMeter(),
-                         "Accuracy": AverageMeter()}
+        epoch_summary = {"CELoss": AverageMeter(), "Accuracy": AverageMeter(), "mAP": AverageMeter()}
         tqdm_loader = tqdm(train_loader)
         computer = MetricComputer(n_classes=num_classes)
-        for batch_X, batch_Y in tqdm(train_loader):
+        all_train_preds = []
+        all_train_labels = []
+        for batch_X, batch_Y in tqdm_loader:
             batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device)
             optimizer.zero_grad()
             out, projections = posthoc_layer(batch_X, return_dist=True)
@@ -76,21 +80,30 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifier.weight**2).mean()
             loss.backward()
             optimizer.step()
-            
+
             epoch_summary["CELoss"].update(cls_loss.detach().item(), batch_X.shape[0])
-            metrics = computer(out, batch_Y) 
+            metrics = computer(out, batch_Y)
             epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0])
 
-            summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
-            summary_text = " ".join(summary_text)
-            tqdm_loader.set_description(summary_text)
-        
-        latest_info = dict()
-        latest_info["epoch"] = epoch
-        latest_info["args"] = args
-        latest_info["train_acc"] = epoch_summary["Accuracy"]
-        latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"])
+            all_train_preds.append(out.detach().cpu())
+            all_train_labels.append(batch_Y.detach().cpu())
+
+        all_train_preds = torch.cat(all_train_preds)
+        all_train_labels = torch.cat(all_train_labels)
+        train_mAP = computer._mean_average_precision(all_train_preds, all_train_preds.argmax(dim=1), all_train_labels)
+        epoch_summary["mAP"].update(train_mAP)
+
+        summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
+        tqdm_loader.set_description("Train - " + " ".join(summary_text))
+
+        latest_info = {
+            "epoch": epoch,
+            "args": args,
+            "train_metrics": epoch_summary,
+            "test_metrics": eval_model(args, posthoc_layer, val_loader, num_classes)
+        }
+        print("Final test metrics: ", latest_info["test_metrics"])
+
     return latest_info
 
 
