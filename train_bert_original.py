@@ -14,7 +14,7 @@ def config():
     parser.add_argument("--dataset", default="20ng", type=str)
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
-    parser.add_argument("--batch-size", default=64, type=int)
+    parser.add_argument("--batch-size", default=16, type=int)
     parser.add_argument("--num-workers", default=4, type=int)
     return parser.parse_args()
 
