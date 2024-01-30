@@ -16,7 +16,7 @@ def config():
     parser.add_argument("--num-workers", default=4, type=int)
     return parser.parse_args()
 
-def train_and_evaluate(train_loader, test_loader, num_labels, device, epochs=3):
+def main(train_loader, test_loader, num_labels, device, epochs=10):
     # Initialize model
     model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=num_labels)
     model.to(device)
@@ -51,11 +51,11 @@ def train_and_evaluate(train_loader, test_loader, num_labels, device, epochs=3):
     accuracy = accuracy_score(true_labels, predictions)
     return accuracy
 
-def main():
+if __name__ == "__main__":
     args = config
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     train_loader, test_loader, _, _ = get_dataset(args)
     num_labels = len(train_loader.dataset.labels.unique())
-    accuracy = train_and_evaluate(train_loader, test_loader, num_labels, device)
+    accuracy = main(train_loader, test_loader, num_labels, device)
     print(f"Accuracy: {accuracy}")
