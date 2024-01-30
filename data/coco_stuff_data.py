@@ -98,8 +98,7 @@ def create_multilabels(dataset_view, classes):
     multilabels = []
     for sample in dataset_view:
         label_vector = [0] * len(classes)
-        print('sample.field_names', sample.field_names)
-        for detection in sample.detections.detections:
+        for detection in sample.ground_truth.detections:
             if detection.label in classes:
                 label_vector[classes.index(detection.label)] = 1
         multilabels.append(label_vector)
