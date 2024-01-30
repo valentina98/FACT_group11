@@ -114,6 +114,8 @@ def get_cavs(X_train, y_train, X_val, y_val, C):
         X_train, y_train, X_val, y_val: activations (numpy arrays) to learn the concepts with.
         C: Regularizer for the SVM. 
     """
+    print(X_train)
+    print(X_val)
     svm = SVC(C=C, kernel="linear")
     svm.fit(X_train, y_train)
     train_acc = svm.score(X_train, y_train)
