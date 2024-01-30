@@ -47,7 +47,7 @@ def eval_model(args, posthoc_layer, loader, num_classes):
         all_preds.append(torch.sigmoid(out).detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
         metrics = computer(out, batch_Y) 
-        # epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
+        epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
         epoch_summary["mAP"].update(metrics["mean_average_precision"], batch_X.shape[0])
         summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
         tqdm_loader.set_description("Eval - " + " ".join(summary_text))
@@ -102,7 +102,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             "train_metrics": epoch_summary,
             "test_metrics": eval_model(args, posthoc_layer, val_loader, num_classes)
         }
-        print("Final test metrics: ", latest_info["test_metrics"]["test_acc"].avg, latest_info["test_metrics"]["mAP"].avg)
+        print("Final test metrics: ", latest_info["test_metrics"]["Accuracy"].avg, latest_info["test_metrics"]["mAP"].avg)
 
     return latest_info
 
