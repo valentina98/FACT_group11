@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 from .constants import CUB_PROCESSED_DIR
-
+from torch.nn.utils.rnn import pad_sequence
 from transformers import BertTokenizer
 import nltk
 import os
@@ -27,7 +27,10 @@ class FrameNetDataset(Dataset):
     def __getitem__(self, idx):
         text = self.texts[idx]
         encoded_input = self.tokenizer(text, add_special_tokens=True, truncation=True, max_length=512)
-        return encoded_input
+        # Convert to tensors and return as a tuple
+        input_ids = torch.tensor(encoded_input['input_ids'], dtype=torch.long)
+        attention_mask = torch.tensor(encoded_input['attention_mask'], dtype=torch.long)
+        return input_ids, attention_mask
 
 def cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     from .cub import CUBConceptDataset, get_concept_dicts
@@ -184,19 +187,13 @@ def extract_frame_data(sentence):
     return frame_data
 
 def collate_fn(batch):
-    # Extracting input_ids and attention_masks from the batch
-    input_ids = [item[0] for item in batch]
-    attention_masks = [item[1] for item in batch]
+    # Unzip the batch to separate input_ids and attention_masks
+    input_ids, attention_masks = zip(*batch)
 
-    # Convert lists to tensors
-    input_ids = torch.tensor(input_ids, dtype=torch.long)
-    attention_masks = torch.tensor(attention_masks, dtype=torch.long)
+    input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+    attention_masks_padded = pad_sequence(attention_masks, batch_first=True, padding_value=0)
 
-    # Padding might be necessary depending on your model requirements
-    # input_ids = torch.nn.utils.rnn.pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
-    # attention_masks = torch.nn.utils.rnn.pad_sequence(attention_masks, batch_first=True, padding_value=0)
-
-    return input_ids, attention_masks
+    return input_ids_padded, attention_masks_padded
 
 def load_all_data(chunks_dir):
     combined_data = {}
@@ -263,4 +260,3 @@ def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, 
         return framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
-    
