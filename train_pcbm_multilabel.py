@@ -74,8 +74,9 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     }
 
     # Access the coefficients and intercepts
-    coefs = [est.coef_ for est in classifier.estimators_]
-    intercepts = [est.intercept_ for est in classifier.estimators_]
+    coefs = np.array([est.coef_ for est in classifier.estimators_]).astype(np.float32)
+    intercepts = np.array([est.intercept_ for est in classifier.estimators_]).astype(np.float32)
+    # ???UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
 
     return run_info, coefs, intercepts
 
