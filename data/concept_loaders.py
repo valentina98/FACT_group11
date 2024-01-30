@@ -218,10 +218,7 @@ def generate_negative_samples(combined_data, frame_to_exclude, num_samples):
         if frame != frame_to_exclude:
             all_other_positive_samples.extend(data['positive'])
     
-    if len(all_other_positive_samples) < num_samples:
-        return np.random.choice(all_other_positive_samples, num_samples, replace=True)
-    else:
-        return np.random.choice(all_other_positive_samples, num_samples, replace=False)
+    return np.random.choice(all_other_positive_samples, 2*num_samples, replace=len(all_other_positive_samples) < 2*num_samples)
 
 def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     np.random.seed(seed)
@@ -229,7 +226,7 @@ def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, see
     combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
     for frame, data in combined_data.items():
         try:
-            pos_samples = np.random.choice(data['positive'], n_samples, replace=len(data['positive']) < n_samples)
+            pos_samples = np.random.choice(data['positive'], 2*n_samples, replace=len(data['positive']) < 2*n_samples)
             neg_samples = generate_negative_samples(combined_data, frame, n_samples)
 
             pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer)
