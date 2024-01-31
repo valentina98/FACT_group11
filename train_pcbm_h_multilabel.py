@@ -114,8 +114,11 @@ def main(args, backbone, preprocess):
     train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
     # Flatten embeddings if they are not already 2D
-    train_embs = train_embs.view(train_embs.size(0), -1) if train_embs.dim() > 2 else train_embs
-    test_embs = test_embs.view(test_embs.size(0), -1) if test_embs.dim() > 2 else test_embs
+    if train_embs.ndim > 2:
+        train_embs = train_embs.reshape(train_embs.shape[0], -1)
+    if test_embs.ndim > 2:
+        test_embs = test_embs.reshape(test_embs.shape[0], -1)
+
 
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).float()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).float()), batch_size=args.batch_size, shuffle=False)
