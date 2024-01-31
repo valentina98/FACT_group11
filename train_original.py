@@ -1,13 +1,10 @@
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from transformers import BertTokenizer
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from data import get_dataset
 import argparse
 from torch.optim import AdamW
-from torchvision import transforms
 from models import get_model
 
 def config():
@@ -20,6 +17,7 @@ def config():
     parser.add_argument("--num_workers", default=2, type=int)
     parser.add_argument("--epochs", default=10, type=int)
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
+    parser.add_argument("--lr", default=1e-2, type=float)
     return parser.parse_args()
 
 class CustomClassifier(nn.Module):
@@ -92,7 +90,7 @@ def main(args):
     model.to(args.device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=5e-5)
+    optimizer = AdamW(model.parameters(), lr=args.lr)
 
     train_loader, test_loader, _, classes = get_dataset(args, preprocess)
 
