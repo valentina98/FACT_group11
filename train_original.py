@@ -40,7 +40,7 @@ def get_model_final(args, backbone,num_labels):
         backbone = backbone.visual
         backbone.output_dim = backbone.output_dim
     else:
-        backbone.output_dim = backbone.fc.in_features
+        return
 
     for param in backbone.parameters():
         param.requires_grad = False
@@ -83,17 +83,18 @@ def evaluate(model, test_loader, device):
 
 def main(args):
     if "resnet18_cub" in args.backbone_name:
-       model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name,full_model=True)
-       train_loader, test_loader, _, classes = get_dataset(args,preprocess)
+        model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name, full_model=True)
     else:
         backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-        
         num_labels = len(classes)
+        model = get_model_final(args, backbone, num_labels)
 
-        model = get_model_final(args,backbone,num_labels).to(args.device)
+    model.to(args.device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = AdamW(model.parameters(), lr=5e-5)
+
+    train_loader, test_loader, _, classes = get_dataset(args, preprocess)
 
     for epoch in range(args.epochs):
         train_loss = train(model, train_loader, criterion, optimizer, args.device)
@@ -102,6 +103,7 @@ def main(args):
     
     accuracy = evaluate(model, test_loader, args.device)
     print(f"Accuracy: {accuracy:.4f}")
+
 if __name__ == "__main__":
     args = config()
     main(args)
