@@ -98,8 +98,8 @@ def run_linear_probe(args, train_data, test_data):
     coefs = np.array([est.coef_ for est in classifier.estimators_])
     intercepts = np.array([est.intercept_ for est in classifier.estimators_])
 
-    print("coefs:", coefs.shape, coefs[0])
-    print("intercepts:", intercepts.shape, intercepts[0])
+    print("coefs shape:", coefs.shape)
+    print("intercepts shape:", intercepts.shape)
 
     return run_info, coefs, intercepts
 
