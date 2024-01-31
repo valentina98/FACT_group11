@@ -54,21 +54,23 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
     # e.g. if the path is /../../cub_resnet-cub_0.1_100.pkl, then the conceptbank string is resnet-cub_0.1_100
     conceptbank_source = args.concept_bank.split("/")[-1].split(".")[0] 
     
-    # To make it easier to analyize results/rerun with different params, we'll extract the embeddings and save them
-    train_file = f"train-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
-    test_file = f"test-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
-    train_proj_file = f"train-proj_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
-    test_proj_file = f"test-proj_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
-    train_lbls_file = f"train-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
-    test_lbls_file = f"test-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
+    if "ViT" in args.concept_bank:
+        new_backbone_name = args.backbone_name.replace('/', '-')
     
-
-    train_file = os.path.join(args.out_dir, train_file)
-    test_file = os.path.join(args.out_dir, test_file)
-    train_proj_file = os.path.join(args.out_dir, train_proj_file)
-    test_proj_file = os.path.join(args.out_dir, test_proj_file)
-    train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
-    test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
+        # Otherwise with ViT models the '/' in 'ViT-B/32' causes issues with the file name
+        train_file = f"train-embs_{args.dataset}__{new_backbone_name}__{conceptbank_source}.npy"
+        test_file = f"test-embs_{args.dataset}__{new_backbone_name}__{conceptbank_source}.npy"
+        train_proj_file = f"train-proj_{args.dataset}__{new_backbone_name}__{conceptbank_source}.npy"
+        test_proj_file = f"test-proj_{args.dataset}__{new_backbone_name}__{conceptbank_source}.npy"
+        train_lbls_file = f"train-lbls_{args.dataset}__{new_backbone_name}__{conceptbank_source}_lbls.npy"
+        test_lbls_file = f"test-lbls_{args.dataset}__{new_backbone_name}__{conceptbank_source}_lbls.npy"
+    else: 
+        train_file = os.path.join(args.out_dir, train_file)
+        test_file = os.path.join(args.out_dir, test_file)
+        train_proj_file = os.path.join(args.out_dir, train_proj_file)
+        test_proj_file = os.path.join(args.out_dir, test_proj_file)
+        train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
+        test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
 
     if os.path.exists(train_proj_file):
         train_embs = np.load(train_file)
