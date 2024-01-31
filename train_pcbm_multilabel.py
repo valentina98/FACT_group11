@@ -133,7 +133,7 @@ def main(args, concept_bank, backbone, preprocess):
 
     # Analyze the classifier
     # Assume that 'concept_names' contains the names of all concepts used
-    concept_names = list(concept_bank.keys())
+    concept_names = list(concept_bank.concept_names.copy())
     analysis = analyze_classifier(posthoc_layer.residual_classifier, concept_names, k=5)
 
     # Print and/or save the analysis results
