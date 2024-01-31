@@ -75,4 +75,3 @@ if __name__ == "__main__":
     train_loader, test_loader, _, classes = get_dataset(args)
     num_labels = len(train_loader.dataset.labels.unique())
     accuracy = main(args,train_loader, test_loader, classes)
-    print(f"Accuracy: {accuracy}")
