@@ -82,12 +82,14 @@ def evaluate(model, test_loader, device):
     return correct / total
 
 def main(args):
-    backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-    train_loader, test_loader, _, classes = get_dataset(args,preprocess)
-    num_labels = len(classes)
+    if "resnet18_cub" in args.backbone_name:
+       model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name,full_model=True) 
+    else:
+        backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
+        train_loader, test_loader, _, classes = get_dataset(args,preprocess)
+        num_labels = len(classes)
 
-    model = get_model_final(args,backbone,num_labels).to(args.device)
-    
+        model = get_model_final(args,backbone,num_labels).to(args.device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = AdamW(model.parameters(), lr=5e-5)
@@ -96,7 +98,9 @@ def main(args):
         train_loss = train(model, train_loader, criterion, optimizer, args.device)
         accuracy = evaluate(model, test_loader, args.device)
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {train_loss:.4f}, Accuracy: {accuracy:.4f}")
-
+    
+    accuracy = evaluate(model, test_loader, args.device)
+    print(f"Accuracy: {accuracy:.4f}")
 if __name__ == "__main__":
     args = config()
     main(args)
