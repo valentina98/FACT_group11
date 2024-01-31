@@ -25,6 +25,26 @@ class ResNetTop(nn.Module):
         x = nn.Softmax(dim=-1)(x)
         return x
 
+# MobileNet
+class MobileNetBottom(nn.Module):
+    def __init__(self, original_model):
+        super(MobileNetBottom, self).__init__()
+        self.features = nn.Sequential(*list(original_model.children())[:-1])
+
+    def forward(self, x):
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        return x
+
+class MobileNetTop(nn.Module):
+    def __init__(self, original_model):
+        super(MobileNetTop, self).__init__()
+        self.classifier = nn.Sequential(*[list(original_model.children())[-1]])
+
+    def forward(self, x):
+        x = self.classifier(x)
+        x = nn.Softmax(dim=-1)(x)
+        return x
 
 def get_model(args, backbone_name="resnet18_cub", full_model=False):
     if "clip" in backbone_name:
@@ -56,6 +76,41 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
                         transforms.ToTensor(),
                         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
                       ])
+
+    # New: Resnet50 for HAM10000
+    elif backbone_name.lower() == "ham10000_resnet50":
+        from .derma_models import get_derma_model
+        model, backbone, model_top = get_derma_model(args, backbone_name.lower())
+        preprocess = transforms.Compose([
+                        transforms.Resize(256),
+                        transforms.CenterCrop(224),
+                        transforms.ToTensor(),
+                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                      ])
+    
+    # New: Densenet for HAM10000
+    elif backbone_name.lower() == "ham10000_densenet":
+        from .derma_models import get_derma_model
+        model, backbone, model_top = get_derma_model(args, backbone_name.lower())
+        preprocess = transforms.Compose([
+                        transforms.Resize(256),
+                        transforms.CenterCrop(224),
+                        transforms.ToTensor(),
+                        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                      ])
+        
+    # New: mobilenet_w1_cub and proxylessnas_mobile_cub for CUB
+    elif backbone_name.lower() == "mobilenet_w1_cub" or backbone_name.lower() == "proxylessnas_mobile_cub":
+        from pytorchcv.model_provider import get_model as ptcv_get_model
+        model = ptcv_get_model(backbone_name, pretrained=True, root=args.out_dir)
+        backbone, model_top = MobileNetBottom(model), MobileNetTop(model)
+        preprocess = transforms.Compose([
+            transforms.Resize(224),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+        
     else:
         raise ValueError(backbone_name)
 
