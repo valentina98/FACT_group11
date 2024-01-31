@@ -77,7 +77,10 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             optimizer.zero_grad()
             out, projections = posthoc_layer(batch_X, return_dist=True)
             cls_loss = cls_criterion(out, batch_Y)
-            loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifier.weight**2).mean()
+            # Calculate L2 penalty for each classifier in the residual_classifiers ModuleList
+            l2_penalty = sum((classifier.weight**2).mean() for classifier in posthoc_layer.residual_classifiers)
+            # Combine the classification loss and the L2 penalty
+            loss = cls_loss + args.l2_penalty * l2_penalty
             loss.backward()
             optimizer.step()
 
