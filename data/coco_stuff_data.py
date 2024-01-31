@@ -22,7 +22,39 @@ class CocoStuffDataset(Dataset):
             image = self.transform(image)
         label = self.labels[idx]
         return image, torch.tensor(label)
-    
+
+class CocoStuffDatasetMultilabel(Dataset):
+    def __init__(self, filepaths, labels, transform=None):
+        """
+        Args:
+            filepaths (List[str]): List of image file paths.
+            labels (List[List[int]]): List of binary label vectors for each image.
+            transform: PyTorch transforms to apply to the images.
+        """
+        self.filepaths = filepaths
+        self.labels = labels
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.filepaths)
+
+    def __getitem__(self, idx):
+        """
+        Args:
+            idx (int): Index of the item.
+
+        Returns:
+            tuple: (image, label) where label is the binary vector of labels.
+        """
+        image = Image.open(self.filepaths[idx]).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
+
+        label = self.labels[idx]
+        label_tensor = torch.tensor(label, dtype=torch.float32)
+
+        return image, label_tensor
+
 def sample_or_upsample(dataset_view, num_samples, seed):
     # Sample
     sampled_filepaths = [sample.filepath for sample in dataset_view.take(num_samples, seed)]
@@ -166,8 +198,8 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
         train_multilabels.extend(create_multilabels(train_view, biased_classes))
         val_multilabels.extend(create_multilabels(val_view, biased_classes))
 
-    train_data = CocoStuffDataset(train_filepaths, train_multilabels, transform=preprocess)
-    val_data = CocoStuffDataset(val_filepaths, val_multilabels, transform=preprocess)
+    train_data = CocoStuffDatasetMultilabel(train_filepaths, train_multilabels, transform=preprocess)
+    val_data = CocoStuffDatasetMultilabel(val_filepaths, val_multilabels, transform=preprocess)
 
     train_loader = DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_data, batch_size=args.batch_size, shuffle=False)
