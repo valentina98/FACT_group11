@@ -40,7 +40,7 @@ def get_model_final(args, backbone,num_labels):
         backbone = backbone.visual
         backbone.output_dim = backbone.output_dim
     else:
-        backbone.output_dim = model.fc.in_features
+        backbone.output_dim = backbone.fc.in_features
 
     for param in backbone.parameters():
         param.requires_grad = False
