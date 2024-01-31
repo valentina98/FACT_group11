@@ -131,15 +131,14 @@ def main(args, concept_bank, backbone, preprocess):
     torch.save(posthoc_layer, model_path)
     
 
-    # Analyze the classifier
-    # Assume that 'concept_names' contains the names of all concepts used
-    concept_names = list(concept_bank.concept_names.copy())
-    analysis = analyze_classifier(posthoc_layer.residual_classifier, concept_names, k=5)
+    # # Analyze the 
+    # concept_names = list(concept_bank.concept_names.copy())
+    # analysis = analyze_classifier(posthoc_layer.residual_classifier, concept_names, k=5)
 
-    # Print and/or save the analysis results
-    print("Top-5 Concept Weights for Each Class:")
-    for class_idx, top_concepts in analysis.items():
-        print(f"Class {idx_to_class[class_idx]}: {top_concepts}")
+    # # Print and/or save the analysis results
+    # print("Top-5 Concept Weights for Each Class:")
+    # for class_idx, top_concepts in analysis.items():
+    #     print(f"Class {idx_to_class[class_idx]}: {top_concepts}")
 
 
     # Again, a sad hack.. Open to suggestions
