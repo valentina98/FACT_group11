@@ -12,7 +12,8 @@ from models import get_model
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backbone_name", default="resnet50", type=str, help="Model backbone")
+    parser.add_argument("--backbone_name", default="clip:RN50", type=str, help="Model backbone")
+    parser.add_argument("--dataset", default="cifar10", type=str)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu", type=str)
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--batch_size", default=16, type=int)
