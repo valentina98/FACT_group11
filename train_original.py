@@ -84,6 +84,7 @@ def main(args):
         model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name, full_model=True)
     else:
         backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
+        train_loader, test_loader, _, classes = get_dataset(args, preprocess)
         num_labels = len(classes)
         model = get_model_final(args, backbone, num_labels)
 
