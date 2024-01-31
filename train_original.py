@@ -83,10 +83,11 @@ def evaluate(model, test_loader, device):
 
 def main(args):
     if "resnet18_cub" in args.backbone_name:
-       model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name,full_model=True) 
+       model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name,full_model=True)
+       train_loader, test_loader, _, classes = get_dataset(args,preprocess)
     else:
         backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-        train_loader, test_loader, _, classes = get_dataset(args,preprocess)
+        
         num_labels = len(classes)
 
         model = get_model_final(args,backbone,num_labels).to(args.device)
