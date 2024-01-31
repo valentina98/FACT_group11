@@ -31,6 +31,7 @@ class CustomClassifier(nn.Module):
     def forward(self, inputs):
         with torch.no_grad():
             features = self.backbone(inputs)
+        features = features.to(dtype=self.classifier.weight.dtype)
         logits = self.classifier(features)
         return logits
 
