@@ -56,6 +56,16 @@ def evaluate(model, test_loader, num_classes):
         correct = sum(p == l for p, l in zip(all_preds, all_labels))
         return correct / len(all_labels)
 
+def get_output_dim(backbone,backbone_name):
+    if "clip" in backbone_name:
+        output_dim = backbone.visual.output_dim
+    elif "resnet" in backbone_name:
+        output_dim = backbone.fc.in_features
+    else:
+        raise ValueError(f"Unknown backbone: {backbone_name}")
+
+    return output_dim
+
 def main(args):
 
     backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
@@ -65,7 +75,8 @@ def main(args):
         param.requires_grad = False
 
     num_classes = len(classes)
-    classifier = nn.Linear(backbone.output_dim, num_classes)
+    output_dim = get_output_dim(backbone,args.backbone_name)
+    classifier = nn.Linear(output_dim, num_classes)
     model = nn.Sequential(backbone, classifier)
 
     criterion = nn.CrossEntropyLoss()
