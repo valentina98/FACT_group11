@@ -71,7 +71,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             out, projections = posthoc_layer(batch_X, return_dist=True)
 
             cls_loss = cls_criterion(out, batch_Y)
-            loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifier.weight**2).mean()
+            loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifiers.weight**2).mean()
             loss.backward()
             optimizer.step()
 
@@ -121,8 +121,8 @@ def main(args, backbone, preprocess):
     hybrid_model = hybrid_model.to(args.device)
     
     # Initialize the optimizer
-    hybrid_optimizer = torch.optim.Adam(hybrid_model.residual_classifier.parameters(), lr=args.lr)
-    hybrid_model.residual_classifier = hybrid_model.residual_classifier.float()
+    hybrid_optimizer = torch.optim.Adam(hybrid_model.residual_classifiers.parameters(), lr=args.lr)
+    hybrid_model.residual_classifiers = hybrid_model.residual_classifiers.float()
     hybrid_model.bottleneck = hybrid_model.bottleneck.float()
     
     # Train PCBM-h
