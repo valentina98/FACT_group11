@@ -35,7 +35,7 @@ def config():
 
 @torch.no_grad()
 def eval_model(args, posthoc_layer, loader, num_classes):
-    epoch_summary = {"Accuracy": AverageMeter(), "mAP": AverageMeter()}
+    epoch_summary = {"mAP": AverageMeter()}
     tqdm_loader = tqdm(loader)
     computer = MetricComputerMAP(n_classes=num_classes)
     all_preds = []
@@ -47,7 +47,6 @@ def eval_model(args, posthoc_layer, loader, num_classes):
         all_preds.append(out.detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
         metrics = computer(out, batch_Y) 
-        epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
         epoch_summary["mAP"].update(metrics["mean_average_precision"], batch_X.shape[0])
         summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
         tqdm_loader.set_description("Eval - " + " ".join(summary_text))
@@ -67,7 +66,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
     cls_criterion = nn.BCEWithLogitsLoss()  # Use BCEWithLogitsLoss for multi-label classification
     for epoch in range(1, args.num_epochs+1):
         print(f"Epoch: {epoch}")
-        epoch_summary = {"CELoss": AverageMeter(), "Accuracy": AverageMeter(), "mAP": AverageMeter()}
+        epoch_summary = {"CELoss": AverageMeter(), "mAP": AverageMeter()}
         tqdm_loader = tqdm(train_loader)
         computer = MetricComputerMAP(n_classes=num_classes)
         all_train_preds = []
@@ -86,8 +85,6 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             optimizer.step()
 
             epoch_summary["CELoss"].update(cls_loss.detach().item(), batch_X.shape[0])
-            metrics = computer(out, batch_Y)
-            epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0])
 
             all_train_preds.append(out.detach().cpu())
             all_train_labels.append(batch_Y.detach().cpu())
@@ -106,7 +103,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             "train_metrics": epoch_summary,
             "test_metrics": eval_model(args, posthoc_layer, val_loader, num_classes)
         }
-        print("Final test metrics: ", latest_info["test_metrics"]["Accuracy"].avg, latest_info["test_metrics"]["mAP"].avg)
+        print("Final test metrics: ", latest_info["test_metrics"]["mAP"].avg)
 
     return latest_info
 
