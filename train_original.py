@@ -17,7 +17,8 @@ def config():
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--num_workers", default=2, type=int)
-    parser.add_argument("--epochs", default=3, type=int)
+    parser.add_argument("--epochs", default=10, type=int)
+    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
     return parser.parse_args()
 
 class CustomClassifier(nn.Module):
