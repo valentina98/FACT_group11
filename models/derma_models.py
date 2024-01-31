@@ -130,10 +130,78 @@ class InceptionTop(nn.Module):
         x = nn.Softmax(dim=-1)(x)
         return x
 
+# DenseNet for HAM10000
+class DenseNetBottom(nn.Module):
+    def __init__(self, original_model):
+        super(DenseNetBottom, self).__init__()
+        self.features = nn.Sequential(*list(original_model.features.children()))
 
+    def forward(self, x):
+        x = self.features(x)
+        x = nn.ReLU(inplace=True)(x)
+        x = nn.AdaptiveAvgPool2d((1, 1))(x)
+        x = torch.flatten(x, 1)
+        return x
+
+class DenseNetTop(nn.Module):
+    def __init__(self, original_model):
+        super(DenseNetTop, self).__init__()
+        self.classifier = original_model.classifier
+
+    def forward(self, x):
+        x = self.classifier(x)
+        x = nn.Softmax(dim=-1)(x)
+        return x
+
+# ResNet50 for HAM10000
+class ResNet50Bottom(nn.Module):
+    def __init__(self, original_model):
+        super(ResNet50Bottom, self).__init__()
+        self.features = nn.Sequential(
+            original_model.conv1,
+            original_model.bn1,
+            original_model.relu,
+            original_model.maxpool,
+
+            original_model.layer1,
+            original_model.layer2,
+            original_model.layer3,
+            original_model.layer4,
+
+            original_model.avgpool
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        return x
+
+class ResNet50Top(nn.Module):
+    def __init__(self, original_model):
+        super(ResNet50Top, self).__init__()
+        self.fc = original_model.fc
+
+    def forward(self, x):
+        x = self.fc(x)
+        x = nn.Softmax(dim=-1)(x)
+        return x
+    
+# New get_derma_model function with the new backbone models added
 def get_derma_model(args, backbone_name="ham10000"):
     model = load_model(backbone_name.upper(), save_dir=args.out_dir)
-    model = model.to("cuda")
+    model = model.to("cpu")
     model = model.eval()
-    model_bottom, model_top = InceptionBottom(model), InceptionTop(model)
+
+    if backbone_name == 'ham10000_inception':
+        model_bottom, model_top = InceptionBottom(model), InceptionTop(model)
+    elif backbone_name == 'ham10000_densenet':
+        model_bottom, model_top = DenseNetBottom(model), DenseNetTop(model)
+    elif backbone_name == 'ham10000_resnet50':
+        model_bottom, model_top = ResNet50Bottom(model), ResNet50Top(model)
+    else:
+        raise ValueError(f"Unsupported backbone: {backbone_name}")
+
     return model, model_bottom, model_top
+
+
+
