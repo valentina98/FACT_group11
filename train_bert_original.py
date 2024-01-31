@@ -16,6 +16,7 @@ def config():
     parser.add_argument("--batch-size", default=16, type=int)
     parser.add_argument("--num-workers", default=2, type=int)
     parser.add_argument("--epochs", default=3, type=int)
+    parser.add_argument("--lr", default=1e-2, type=float)
     return parser.parse_args()
 
 class BertLinearClassifier(nn.Module):
@@ -44,7 +45,7 @@ def main(args, train_loader, test_loader, classes):
     for param in model.bert.parameters():
         param.requires_grad = False
 
-    optim = AdamW(model.classifier.parameters(), lr=5e-5)
+    optim = AdamW(model.classifier.parameters(), lr=args.lr)
 
     for epoch in range(args.epochs):
         model.train()
