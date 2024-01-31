@@ -85,7 +85,7 @@ def main(args):
     train_loader, test_loader, _, classes = get_dataset(args,preprocess)
     num_labels = len(classes)
 
-    model = get_model_final(args,backbone,num_labels)
+    model = get_model_final(args,backbone,num_labels).to(args.device)
     
 
     criterion = nn.CrossEntropyLoss()
