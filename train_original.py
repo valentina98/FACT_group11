@@ -17,6 +17,7 @@ def config():
     parser.add_argument("--batch-size", default=16, type=int)
     parser.add_argument("--num-workers", default=2, type=int)
     parser.add_argument("--epochs", default=3, type=int)
+    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
     return parser.parse_args()
 
 def train(model, train_loader, criterion, optimizer):
