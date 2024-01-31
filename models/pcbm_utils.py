@@ -127,13 +127,13 @@ class PosthocLinearMultilabelCBM(nn.Module):
         return (out, x) if return_dist else out
     
     def forward_projs(self, projs):
-        return self.classifier(projs)
+        return self.classifiers(projs)
     
     def trainable_params(self):
-        return self.classifier.parameters()
+        return self.classifiers.parameters()
     
     def classifier_weights(self):
-        return self.classifier.weight
+        return self.classifiers.weight
     
     def set_weights(self, weights, bias):
         for i, classifier in enumerate(self.classifiers):
@@ -141,7 +141,7 @@ class PosthocLinearMultilabelCBM(nn.Module):
             classifier.bias.data = torch.from_numpy(bias[i]).float()
 
     def analyze_classifier(self, k=5, print_lows=False):
-        weights = self.classifier.weight.clone().detach()
+        weights = self.classifiers.weight.clone().detach()
         output = []
 
         if len(self.idx_to_class) == 2:
@@ -226,11 +226,6 @@ class PosthocHybridMultilabelCBM(nn.Module):
         ])
 
     def forward(self, emb, return_dist=False):
-        # x = self.bottleneck.compute_dist(emb)
-        # out = self.bottleneck.classifier(x) + self.residual_classifier(emb)
-        # if return_dist:
-        #     return out, x
-        # return out
     
         concept_out = self.bottleneck.forward_projs(emb)
         residual_outs = [classifier(emb).squeeze() for classifier in self.residual_classifiers]
@@ -242,10 +237,10 @@ class PosthocHybridMultilabelCBM(nn.Module):
         return final_out
 
     def trainable_params(self):
-        return self.residual_classifier.parameters()
+        return self.residual_classifiers.parameters()
     
     def classifier_weights(self):
-        return self.residual_classifier.weight
+        return self.residual_classifiers.weight
 
     def analyze_classifier(self):
         return self.bottleneck.analyze_classifier()
