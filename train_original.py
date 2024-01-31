@@ -16,9 +16,9 @@ def config():
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--num_workers", default=2, type=int)
-    parser.add_argument("--epochs", default=10, type=int)
+    parser.add_argument("--epochs", default=30, type=int)
     parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
-    parser.add_argument("--lr", default=1e-2, type=float)
+    parser.add_argument("--lr", default=1e-8, type=float)
     return parser.parse_args()
 
 class CustomClassifier(nn.Module):
@@ -109,23 +109,20 @@ def main(args):
         model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name, full_model=True)
     else:
         backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-        num_labels = len(classes)  # Ensure 'classes' is defined or initialized correctly
+        train_loader, test_loader, _, classes = get_dataset(args, preprocess)
+        num_labels = len(classes)
         model = get_model_final(args, backbone, num_labels)
 
     model.to(args.device)
 
-    # Loss, Optimizer, and Scheduler
     criterion = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=5e-5)
+    optimizer = AdamW(model.parameters(), lr=args.lr)
     scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=3, verbose=True)
 
-    # Early stopping
     early_stopping = EarlyStopping(patience=5, verbose=True)
 
-    # Dataset preparation
     train_loader, test_loader, _, classes = get_dataset(args, preprocess)
 
-    # Training loop with scheduler step and early stopping
     for epoch in range(args.epochs):
         train_loss = train(model, train_loader, criterion, optimizer, args.device)
         accuracy = evaluate(model, test_loader, args.device)
