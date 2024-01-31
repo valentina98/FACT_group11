@@ -60,7 +60,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
     cls_criterion = nn.BCEWithLogitsLoss()  # Use BCEWithLogitsLoss for multi-label classification
     for epoch in range(1, args.num_epochs+1):
         print(f"Epoch: {epoch}")
-        epoch_summary = {"CELoss": AverageMeter(), "mAP": AverageMeter()}
+        epoch_summary = {"BCEWithLogitsLoss": AverageMeter(), "mAP": AverageMeter()}
         tqdm_loader = tqdm(train_loader)
         computer = MetricComputerMAP(n_classes=num_classes)
         all_train_preds = []
@@ -75,7 +75,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             loss.backward()
             optimizer.step()
 
-            epoch_summary["CELoss"].update(cls_loss.detach().item(), batch_X.shape[0])
+            epoch_summary["BCEWithLogitsLoss"].update(cls_loss.detach().item(), batch_X.shape[0])
 
             all_train_preds.append(out.detach().cpu())
             all_train_labels.append(batch_Y.detach().cpu())
@@ -94,7 +94,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             "train_metrics": epoch_summary,
             "test_metrics": eval_model(args, posthoc_layer, val_loader, num_classes)
         }
-        print("Final test metrics: ", latest_info["test_metrics"]["mAP"].avg)
+        print("Final test mAP: ", latest_info["test_metrics"]["mAP"].avg)
 
     return latest_info
 

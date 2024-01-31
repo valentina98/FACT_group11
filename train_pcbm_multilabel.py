@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import average_precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
@@ -28,9 +28,36 @@ def config():
     parser.add_argument("--lr", default=1e-3, type=float)
     return parser.parse_args()
 
-
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.metrics import average_precision_score
+
+def analyze_classifier(classifier, feature_names, k=5):
+    """
+    Analyzes the classifier to identify the top-k most influential features for each class.
+
+    Args:
+    - classifier: Trained multi-label classifier.
+    - feature_names: List of feature (or concept) names.
+    - k (int): Number of top features to select.
+
+    Returns:
+    - analysis (dict): Dictionary where keys are class indices and values are lists of top-k features.
+    """
+    analysis = {}
+    for class_idx, estimator in enumerate(classifier.estimators_):
+        # Get the feature weights for the current class
+        class_weights = estimator.coef_[0]
+        
+        # Rank features based on the absolute weights
+        top_features_indices = np.argsort(np.abs(class_weights))[-k:][::-1]
+        
+        # Get the feature names
+        top_features = [feature_names[i] for i in top_features_indices]
+        
+        # Store the result
+        analysis[class_idx] = top_features
+
+    return analysis
 
 def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
@@ -58,12 +85,6 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     # train_labels = np.array(train_labels).astype(np.float32)
     # test_labels = np.array(test_labels).astype(np.float32)
 
-    classifier.fit(train_features, train_labels)
-
-    # Get probabilities for each class
-    train_probabilities = classifier.predict_proba(train_features)
-    test_probabilities = classifier.predict_proba(test_features)
-
     # Calculate mAP
     train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
     test_mAP = average_precision_score(test_labels, test_probabilities, average="macro")
@@ -76,7 +97,9 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     # Access the coefficients and intercepts
     coefs = np.array([est.coef_ for est in classifier.estimators_])
     intercepts = np.array([est.intercept_ for est in classifier.estimators_])
-    # ???UserWarning: Creating a tensor from a list of numpy.ndarrays is extremely slow. Please consider converting the list to a single numpy.ndarray with numpy.array() before converting to a tensor.
+
+    print("coefs:", coefs.shape, coefs[0])
+    print("intercepts:", intercepts.shape, intercepts[0])
 
     return run_info, coefs, intercepts
 
@@ -106,6 +129,18 @@ def main(args, concept_bank, backbone, preprocess):
     model_path = os.path.join(args.out_dir,
                               f"pcbm_{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}.ckpt")
     torch.save(posthoc_layer, model_path)
+    
+
+    # Analyze the classifier
+    # Assume that 'concept_names' contains the names of all concepts used
+    concept_names = list(concept_bank.keys())
+    analysis = analyze_classifier(posthoc_layer.residual_classifier, concept_names, k=5)
+
+    # Print and/or save the analysis results
+    print("Top-5 Concept Weights for Each Class:")
+    for class_idx, top_concepts in analysis.items():
+        print(f"Class {idx_to_class[class_idx]}: {top_concepts}")
+
 
     # Again, a sad hack.. Open to suggestions
     run_info_file = model_path.replace("pcbm", "run_info-pcbm")
@@ -114,11 +149,6 @@ def main(args, concept_bank, backbone, preprocess):
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
-
-    
-    # if num_classes > 1:
-    #     # Prints the Top-5 Concept Weigths for each class.
-    #     print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")
     print(run_info)
