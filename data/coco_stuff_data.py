@@ -5,6 +5,7 @@ from PIL import Image
 import fiftyone as fo
 import fiftyone.zoo as foz
 from fiftyone import ViewField as F
+import numpy as np
 
 
 class CocoStuffDataset(Dataset):
@@ -199,9 +200,9 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
         val_multilabels.extend(create_multilabels(val_view, biased_classes))
 
 
-    print("train_multilabels shape:", train_multilabels.shape)
-    print("val_multilabels shape:", val_multilabels.shape)
-    
+    print("train_multilabels shape:", np.shape(train_multilabels).shape)
+    print("val_multilabels shape:", np.shape(val_multilabels).shape)
+
 
     train_data = CocoStuffDatasetMultilabel(train_filepaths, train_multilabels, transform=preprocess)
     val_data = CocoStuffDatasetMultilabel(val_filepaths, val_multilabels, transform=preprocess)
