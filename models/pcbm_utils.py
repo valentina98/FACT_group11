@@ -226,15 +226,21 @@ class PosthocHybridMultilabelCBM(nn.Module):
         ])
 
     def forward(self, emb, return_dist=False):
-    
-        concept_out = self.bottleneck.forward_projs(emb)
-        residual_outs = [classifier(emb).squeeze() for classifier in self.residual_classifiers]
+        x = self.bottleneck.compute_dist(emb)
+        concept_out = self.bottleneck.classifier(x)
 
-        # Combine concept-based and residual predictions for each class
-        final_out = concept_out + torch.stack(residual_outs, dim=1)
+        # Apply each classifier to the input embeddings and collect outputs
+        outputs = [classifier(emb) for classifier in self.residual_classifiers]
+
+        # Concatenate the outputs from each classifier
+        residual_out = torch.cat(outputs, dim=1)
+
+        # Combine the outputs from the bottleneck and the residual classifiers
+        out = concept_out + residual_out
+
         if return_dist:
-            return final_out, concept_out
-        return final_out
+            return out, x
+        return out
 
     def trainable_params(self):
         return self.residual_classifiers.parameters()
