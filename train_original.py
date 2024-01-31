@@ -1,92 +1,98 @@
 import torch
 import torch.nn as nn
-from torch.optim import Adam
-import numpy as np
-from sklearn.metrics import roc_auc_score
-import argparse
-
+from torch.utils.data import DataLoader
+from transformers import BertTokenizer
+from sklearn.metrics import accuracy_score
+from tqdm import tqdm
 from data import get_dataset
+import argparse
+from torch.optim import AdamW
+from torchvision import transforms
 from models import get_model
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", default="cifar10", type=str)
-    parser.add_argument("--backbone_name", default="clip:RN50", type=str)
-    parser.add_argument("--device", default="cuda", type=str)
+    parser.add_argument("--backbone_name", default="resnet50", type=str, help="Model backbone")
+    parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu", type=str)
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
-    parser.add_argument("--batch-size", default=16, type=int)
-    parser.add_argument("--num-workers", default=2, type=int)
+    parser.add_argument("--batch_size", default=16, type=int)
+    parser.add_argument("--num_workers", default=2, type=int)
     parser.add_argument("--epochs", default=3, type=int)
-    parser.add_argument("--out-dir", required=True, type=str, help="Output folder for model/run info.")
     return parser.parse_args()
 
-def train(model, train_loader, criterion, optimizer):
-    model.train()
-    total_loss = 0
-    for inputs, labels in train_loader:
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-    return total_loss / len(train_loader)
+class CustomClassifier(nn.Module):
+    def __init__(self, backbone, num_labels):
+        super(CustomClassifier, self).__init__()
+        self.backbone = backbone
+        self.classifier = nn.Linear(backbone.output_dim, num_labels)
 
-def evaluate(model, test_loader, num_classes):
-    model.eval()
-    all_labels = []
-    all_preds = []
+    def forward(self, inputs):
+        with torch.no_grad():
+            features = self.backbone(inputs)
+        logits = self.classifier(features)
+        return logits
 
-    with torch.no_grad():
-        for inputs, labels in test_loader:
-            outputs = model(inputs)
-
-            if num_classes == 2:
-                probs = torch.softmax(outputs, dim=1)[:, 1]
-                all_preds.extend(probs.tolist())
-            else:
-                _, predicted = torch.max(outputs.data, 1)
-                all_preds.extend(predicted.tolist())
-
-            all_labels.extend(labels.tolist())
-
-    if num_classes == 2:
-        return roc_auc_score(all_labels, all_preds)
+def get_model_final(args, backbone,num_labels):
+    if "clip" in args.backbone_name:
+        backbone = backbone.visual
+        backbone.output_dim = backbone.output_dim
     else:
-        correct = sum(p == l for p, l in zip(all_preds, all_labels))
-        return correct / len(all_labels)
-
-def get_output_dim(backbone,backbone_name):
-    if "clip" in backbone_name:
-        output_dim = backbone.visual.output_dim
-    elif "resnet" in backbone_name:
-        output_dim = backbone.fc.in_features
-    else:
-        raise ValueError(f"Unknown backbone: {backbone_name}")
-
-    return output_dim
-
-def main(args):
-
-    backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-    train_loader, test_loader, _, classes = get_dataset(args, preprocess)
+        backbone.output_dim = model.fc.in_features
 
     for param in backbone.parameters():
         param.requires_grad = False
 
-    num_classes = len(classes)
-    output_dim = get_output_dim(backbone,args.backbone_name)
-    classifier = nn.Linear(output_dim, num_classes)
-    model = nn.Sequential(backbone, classifier)
+    model = CustomClassifier(backbone, num_labels)
+    return model
+
+def train(model, train_loader, criterion, optimizer, device):
+    model.train()
+    total_loss = 0
+    for inputs, labels in tqdm(train_loader):
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+
+    return total_loss / len(train_loader)
+
+def evaluate(model, test_loader, device):
+    model.eval()
+    total = 0
+    correct = 0
+    with torch.no_grad():
+        for inputs, labels in tqdm(test_loader):
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    return correct / total
+
+def main(args):
+    backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
+    train_loader, test_loader, _, classes = get_dataset(args,preprocess)
+    num_labels = len(classes)
+
+    model = get_model_final(args,backbone,num_labels)
+    
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = Adam(classifier.parameters(), lr=0.001)
+    optimizer = AdamW(model.parameters(), lr=5e-5)
 
-    num_epochs = args.epochs
-    for epoch in range(num_epochs):
-        train_loss = train(model, train_loader, criterion, optimizer)
-        test_accuracy = evaluate(model, test_loader)
-        print(f"Epoch {epoch+1}, Loss: {train_loss:.4f}, Accuracy: {test_accuracy:.4f}")
+    for epoch in range(args.epochs):
+        train_loss = train(model, train_loader, criterion, optimizer, args.device)
+        accuracy = evaluate(model, test_loader, args.device)
+        print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {train_loss:.4f}, Accuracy: {accuracy:.4f}")
 
 if __name__ == "__main__":
     args = config()
