@@ -127,7 +127,14 @@ def learn_conceptbank(args, concept_list, scenario):
         concept_dict[concept] = (text_features, None, None, 0, {})
 
     print(f"# concepts: {len(concept_dict)}")
-    concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{args.backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
+
+    # If the clip model is a ViT model, then the concept bank is saved in a different format
+    if "ViT" in args.backbone_name:
+        new_backbone_name = args.backbone_name.replace('/', '-')
+        concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{new_backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
+    else:
+        concept_dict_path = os.path.join(args.out_dir, f"multimodal_concept_{args.backbone_name}_{scenario}_recurse:{args.recurse}.pkl")
+    
     pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
     print(f"Dumped to : {concept_dict_path}")
 
