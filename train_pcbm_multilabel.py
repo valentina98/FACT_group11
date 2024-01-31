@@ -9,7 +9,7 @@ from sklearn.metrics import average_precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
-from models import PosthocLinearCBM, get_model
+from models import PosthocLinearMultilabelCBM, get_model
 from training_tools import load_or_compute_projections
 
 
@@ -82,9 +82,6 @@ def run_linear_probe(args, train_data, test_data):
     print("Train probabilities shape:", train_probabilities.shape)
     print("Test probabilities shape:", test_probabilities.shape)
 
-    # train_labels = np.array(train_labels).astype(np.float32)
-    # test_labels = np.array(test_labels).astype(np.float32)
-
     # Calculate mAP
     train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
     test_mAP = average_precision_score(test_labels, test_probabilities, average="macro")
@@ -114,7 +111,7 @@ def main(args, concept_bank, backbone, preprocess):
     num_classes = len(classes)
     
     # Initialize the PCBM module.
-    posthoc_layer = PosthocLinearCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
+    posthoc_layer = PosthocLinearMultilabelCBM(concept_bank, backbone_name=args.backbone_name, idx_to_class=idx_to_class, n_classes=num_classes)
     posthoc_layer = posthoc_layer.to(args.device)
 
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
