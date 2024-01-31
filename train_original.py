@@ -6,6 +6,7 @@ from data import get_dataset
 import argparse
 from torch.optim import AdamW
 from models import get_model
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 def config():
     parser = argparse.ArgumentParser()
@@ -79,29 +80,69 @@ def evaluate(model, test_loader, device):
 
     return correct / total
 
+class EarlyStopping:
+    def __init__(self, patience=7, verbose=False, delta=0):
+        self.patience = patience
+        self.verbose = verbose
+        self.delta = delta
+        self.best_score = None
+        self.early_stop = False
+        self.counter = 0
+
+    def __call__(self, val_accuracy, model):
+        score = val_accuracy
+        if self.best_score is None:
+            self.best_score = score
+        elif score < self.best_score + self.delta:
+            self.counter += 1
+            if self.verbose:
+                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_score = score
+            self.counter = 0
+
 def main(args):
+    # Model initialization
     if "resnet18_cub" in args.backbone_name:
         model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name, full_model=True)
     else:
         backbone, preprocess = get_model(args, backbone_name=args.backbone_name)
-        train_loader, test_loader, _, classes = get_dataset(args, preprocess)
-        num_labels = len(classes)
+        num_labels = len(classes)  # Ensure 'classes' is defined or initialized correctly
         model = get_model_final(args, backbone, num_labels)
 
     model.to(args.device)
 
+    # Loss, Optimizer, and Scheduler
     criterion = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=args.lr)
+    optimizer = AdamW(model.parameters(), lr=5e-5)
+    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=3, verbose=True)
 
+    # Early stopping
+    early_stopping = EarlyStopping(patience=5, verbose=True)
+
+    # Dataset preparation
     train_loader, test_loader, _, classes = get_dataset(args, preprocess)
 
+    # Training loop with scheduler step and early stopping
     for epoch in range(args.epochs):
         train_loss = train(model, train_loader, criterion, optimizer, args.device)
         accuracy = evaluate(model, test_loader, args.device)
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {train_loss:.4f}, Accuracy: {accuracy:.4f}")
+
+        # Step the scheduler based on accuracy
+        scheduler.step(accuracy)
+
+        # Early stopping check
+        early_stopping(accuracy, model)
+        if early_stopping.early_stop:
+            print("Early stopping triggered")
+            break
     
+    # Final evaluation
     accuracy = evaluate(model, test_loader, args.device)
-    print(f"Accuracy: {accuracy:.4f}")
+    print(f"Final Accuracy: {accuracy:.4f}")
 
 if __name__ == "__main__":
     args = config()
