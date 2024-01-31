@@ -191,10 +191,7 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
         class_idx = class_to_idx[class_name] # the index of the current class
 
         train_filepaths.extend(sampled_train_filepaths)
-        train_multilabels.extend([class_idx] * len(sampled_train_filepaths))
-
         val_filepaths.extend(sampled_val_filepaths)
-        val_multilabels.extend([class_idx] * len(sampled_val_filepaths))
 
         train_multilabels.extend(create_multilabels(train_view, biased_classes))
         val_multilabels.extend(create_multilabels(val_view, biased_classes))
