@@ -200,8 +200,8 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
         val_multilabels.extend(create_multilabels(val_view, biased_classes))
 
 
-    print("train_multilabels shape:", np.shape(train_multilabels).shape)
-    print("val_multilabels shape:", np.shape(val_multilabels).shape)
+    print("train_multilabels shape:", np.shape(train_multilabels))
+    print("val_multilabels shape:", np.shape(val_multilabels))
 
 
     train_data = CocoStuffDatasetMultilabel(train_filepaths, train_multilabels, transform=preprocess)
