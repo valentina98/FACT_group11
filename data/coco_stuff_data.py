@@ -135,11 +135,36 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
     train_dataset = foz.load_zoo_dataset("coco-2017", split="train", label_types=["detections"], classes=biased_classes, max_samples=num_train_samples_per_class*len(biased_classes))
     val_dataset = foz.load_zoo_dataset("coco-2017", split="validation", label_types=["detections"], classes=biased_classes, max_samples=num_val_samples_per_class*len(biased_classes))
 
-    train_filepaths = [sample.filepath for sample in train_dataset]
-    val_filepaths = [sample.filepath for sample in val_dataset]
+    # train_filepaths = [sample.filepath for sample in train_dataset]
+    # val_filepaths = [sample.filepath for sample in val_dataset]
 
-    train_multilabels = create_multilabels(train_dataset, biased_classes)
-    val_multilabels = create_multilabels(val_dataset, biased_classes)
+    train_filepaths, train_multilabels = [], []
+    val_filepaths, val_multilabels = [], []
+    class_to_idx = {class_name: idx for idx, class_name in enumerate(biased_classes)}
+    for class_name in biased_classes:
+        
+        # Create views for the current class
+        filter_expr = F("label") == class_name
+        train_view = train_dataset.filter_labels("ground_truth", filter_expr)
+        val_view = val_dataset.filter_labels("ground_truth", filter_expr)
+        
+        # Sample or upsample to get the same number of images for each class
+        sampled_train_filepaths = sample_or_upsample(train_view, num_train_samples_per_class, args.seed)
+        sampled_val_filepaths = sample_or_upsample(val_view, num_val_samples_per_class, args.seed)
+
+        # Print the number of samples in each view after before and after sampling
+        print(f"Class '{class_name}': Train View Size = {train_view.count()}, Validation View Size = {val_view.count()}, Sampled Train View Size = {len(sampled_train_filepaths)}, Sampled Validation View Size = {len(sampled_val_filepaths)}")
+
+        class_idx = class_to_idx[class_name] # the index of the current class
+
+        train_filepaths.extend(sampled_train_filepaths)
+        train_multilabels.extend([class_idx] * len(sampled_train_filepaths))
+
+        val_filepaths.extend(sampled_val_filepaths)
+        val_multilabels.extend([class_idx] * len(sampled_val_filepaths))
+
+        train_multilabels.extend(create_multilabels(train_view, biased_classes))
+        val_multilabels.extend(create_multilabels(val_view, biased_classes))
 
     train_data = CocoStuffDataset(train_filepaths, train_multilabels, transform=preprocess)
     val_data = CocoStuffDataset(val_filepaths, val_multilabels, transform=preprocess)

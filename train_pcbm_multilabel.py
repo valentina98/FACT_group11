@@ -59,7 +59,7 @@ def analyze_classifier(classifier, feature_names, k=5):
 
     return analysis
 
-def run_linear_probe(args, train_data, test_data, num_classes):
+def run_linear_probe(args, train_data, test_data):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
@@ -120,7 +120,7 @@ def main(args, concept_bank, backbone, preprocess):
     # We compute the projections and save to the output directory. This is to save time in tuning hparams / analyzing projections.
     train_embs, train_projs, train_lbls, test_embs, test_projs, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
     
-    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), num_classes)
+    run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls))
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)

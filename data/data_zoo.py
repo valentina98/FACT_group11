@@ -126,8 +126,20 @@ def get_dataset(args, preprocess=None):
                           'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
                           'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
         
-        # co_ocurring_classes = ['dining table', 'person', 'fruit', 'road', 'plant vase', 'oven', 'mouse', 'building', 'ceiling', 'drier towel']
-
+        # Co-ccurring classes = ['dining table', 'person', 'fruit', 'road', 'plant vase', 'oven', 'mouse', 'building', 'ceiling', 'towel']
+        # Unsupported by COCO classes: ['fruit', 'road', 'plant vase', 'building', 'ceiling', 'towel']
+        # We define the following set of classes that is as close as possible to the co-occurring classes in the referenced paper
+        # co_ocurring_classes = ['dining table',   # Exists in COCO
+        #                         'person',        # Exists in COCO
+        #                         'banana',        # Replacing 'fruit' with a specific fruit category in COCO
+        #                         'road',          # Exists in COCO (closest to 'street')
+        #                         'vase',          # Replacing 'plant vase' with 'vase'
+        #                         'oven',          # Exists in COCO
+        #                         'laptop',        # Replacing 'mouse' with 'laptop'
+        #                         'building',      # Exists in COCO
+        #                         'window',        # Replacing 'ceiling' with 'window'
+        #                         'sink']          # Replacing 'towel' with 'sink'
+        
         from .coco_stuff_data import load_coco_stuff_data_multilabel
         train_loader, test_loader, idx_to_class = load_coco_stuff_data_multilabel(args, biased_classes, 500, 250)
 
