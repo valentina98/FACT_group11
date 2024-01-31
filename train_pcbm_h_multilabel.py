@@ -8,7 +8,7 @@ import sys
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import average_precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
@@ -36,30 +36,24 @@ def config():
 @torch.no_grad()
 def eval_model(args, posthoc_layer, loader, num_classes):
     epoch_summary = {"mAP": AverageMeter()}
-    tqdm_loader = tqdm(loader)
     computer = MetricComputerMAP(n_classes=num_classes)
     all_preds = []
     all_labels = []
     
-    for batch_X, batch_Y in tqdm_loader:
-        batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
-        out = posthoc_layer(batch_X)            
-        all_preds.append(out.detach().cpu().numpy())
+    for batch_X, batch_Y in loader:
+        batch_X = batch_X.to(args.device)
+        out = posthoc_layer(batch_X)
+        all_preds.append(torch.sigmoid(out).detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
-        metrics = computer(out, batch_Y) 
-        epoch_summary["mAP"].update(metrics["mean_average_precision"], batch_X.shape[0])
-        summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
-        tqdm_loader.set_description("Eval - " + " ".join(summary_text))
-    
+
     all_preds = np.concatenate(all_preds, axis=0)
     all_labels = np.concatenate(all_labels, axis=0)
-    
-    if all_labels.max() == 1:
-        auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
-        epoch_summary["AUC"] = auc
-        return epoch_summary
-    
+
+    mAP_score = computer(out=torch.tensor(all_preds), target=torch.tensor(all_labels))["mean_average_precision"]
+    epoch_summary["mAP"].update(mAP_score)
+
     return epoch_summary
+
 
 
 def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_classes):
@@ -75,9 +69,6 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device)
             optimizer.zero_grad()
             out, projections = posthoc_layer(batch_X, return_dist=True)
-            
-            # ??
-            batch_Y = batch_Y.float()
 
             cls_loss = cls_criterion(out, batch_Y)
             loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifier.weight**2).mean()
@@ -122,9 +113,8 @@ def main(args, backbone, preprocess):
     # We use the precomputed embeddings and projections.
     train_embs, _, train_lbls, test_embs, _, test_lbls = load_or_compute_projections(args, backbone, posthoc_layer, train_loader, test_loader)
 
-    
-    train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
-    test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)
+    train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).float()), batch_size=args.batch_size, shuffle=True)
+    test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).float()), batch_size=args.batch_size, shuffle=False)
 
     # Initialize PCBM-h
     hybrid_model = PosthocHybridCBM(posthoc_layer)
