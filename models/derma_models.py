@@ -25,22 +25,39 @@ def load_model(backbone_name, save_dir="./models", download=True):
     print(save_dir)
     os.makedirs(save_dir, exist_ok=True)
     model_path = os.path.join(save_dir, f"{backbone_name.lower()}.pth")
-    if not os.path.exists(model_path):
-        if not download:
-            raise Exception("Model not downloaded and download option not"\
-                            " enabled.")
-        else:
-            # Requires installation of gdown (pip install gdown)
-            import gdown
-            gdown.download(MODEL_WEB_PATHS[backbone_name], model_path)
-    model = torchvision.models.inception_v3(init_weights=False, pretrained=False, transform_input=True)
-    model.fc = torch.nn.Linear(2048, 2)
-    model.AuxLogits.fc = torch.nn.Linear(768, 2)
-    state_dict = torch.load(model_path)
-    model.load_state_dict(state_dict)
+    
+    if backbone_name == 'HAM10000_INCEPTION':
+        if not os.path.exists(model_path):
+            if not download:
+                raise Exception("Model not downloaded and download option not"\
+                                " enabled.")
+            else:
+                # Requires installation of gdown (pip install gdown)
+                import gdown
+                gdown.download(MODEL_WEB_PATHS[backbone_name], model_path)
+                list(MODEL_WEB_PATHS.keys())
+            
+        model = torchvision.models.inception_v3(init_weights=False, pretrained=False, transform_input=True)
+        model.fc = nn.Linear(2048, 2)
+        model.AuxLogits.fc = nn.Linear(768, 2)
+        
+    elif backbone_name == 'HAM10000_DENSENET':
+        model = torchvision.models.densenet121(pretrained=True)
+        model.classifier = nn.Linear(model.classifier.in_features, 2)
+    elif backbone_name == 'HAM10000_RESNET50':
+        model = torchvision.models.resnet50(pretrained=True)
+        model.fc = nn.Linear(model.fc.in_features, 2)
+    else:
+        raise ValueError(f"Unsupported backbone: {backbone_name}")
+
+    if backbone_name in MODEL_WEB_PATHS:
+        state_dict = torch.load(model_path)
+        model.load_state_dict(state_dict)
+
     model._ddi_name = backbone_name
-    model._ddi_threshold = MODEL_THRESHOLDS[backbone_name]
-    model._ddi_web_path = MODEL_WEB_PATHS[backbone_name]
+    model._ddi_threshold = MODEL_THRESHOLDS.get(backbone_name, 0.5) # Default threshold
+    model._ddi_web_path = MODEL_WEB_PATHS.get(backbone_name, '')
+    
     return model
 
 
