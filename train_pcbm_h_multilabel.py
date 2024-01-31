@@ -12,7 +12,7 @@ from sklearn.metrics import average_precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
-from models import PosthocLinearCBM, PosthocHybridCBM, get_model
+from models import PosthocLinearCBM, PosthocHybridMultilabelCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputerMAP
 
 
@@ -117,7 +117,7 @@ def main(args, backbone, preprocess):
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).float()), batch_size=args.batch_size, shuffle=False)
 
     # Initialize PCBM-h
-    hybrid_model = PosthocHybridCBM(posthoc_layer)
+    hybrid_model = PosthocHybridMultilabelCBM(posthoc_layer)
     hybrid_model = hybrid_model.to(args.device)
     
     # Initialize the optimizer
