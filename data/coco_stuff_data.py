@@ -50,10 +50,8 @@ class CocoStuffDatasetMultilabel(Dataset):
         image = Image.open(self.filepaths[idx]).convert('RGB')
         if self.transform:
             image = self.transform(image)
-
         label = self.labels[idx]
         label_tensor = torch.tensor(label, dtype=torch.float32)
-
         return image, label_tensor
 
 def sample_or_upsample(dataset_view, num_samples, seed):
@@ -127,16 +125,6 @@ def load_coco_stuff_data(args, biased_classes, num_train_samples_per_class=500, 
 
     return train_loader, val_loader, idx_to_class
 
-def create_multilabels(dataset_view, classes):
-    multilabels = []
-    for sample in dataset_view:
-        label_vector = [0] * len(classes)
-        for detection in sample.ground_truth.detections:
-            if detection.label in classes:
-                label_vector[classes.index(detection.label)] = 1
-        multilabels.append(label_vector)
-    return multilabels
-
 def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_class=500, num_val_samples_per_class=250):
     """
     Loads the COCO dataset for multi-label classification. It processes the dataset to create binary label vectors 
@@ -191,12 +179,15 @@ def load_coco_stuff_data_multilabel(args, biased_classes, num_train_samples_per_
         class_idx = class_to_idx[class_name] # the index of the current class
 
         train_filepaths.extend(sampled_train_filepaths)
+        train_label_vector = [0] * len(sampled_train_filepaths)
+        train_label_vector[class_idx] = 1
+        train_multilabels.extend(train_label_vector)
+
         val_filepaths.extend(sampled_val_filepaths)
-
-        train_multilabels.extend(create_multilabels(train_view, biased_classes))
-        val_multilabels.extend(create_multilabels(val_view, biased_classes))
-
-
+        val_label_vector = [0] * len(sampled_val_filepaths)
+        val_label_vector[class_idx] = 1
+        val_multilabels.extend(val_label_vector)
+        
     print("train_multilabels shape:", np.shape(train_multilabels))
     print("val_multilabels shape:", np.shape(val_multilabels))
 
