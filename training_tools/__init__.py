@@ -60,68 +60,35 @@ class MetricComputer(object):
         y_true = target.detach().cpu()
         y_pred = pred.detach().cpu()
         return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
-    
+ 
 class MetricComputerMAP(object):
-    def __init__(self, metric_names=None, n_classes=5):
-        __all_metrics__ = {"accuracy": self._accuracy, 
-                            "class-level-accuracy": self._class_level_accuracy,
-                            "confusion_matrix": self._confusion_matrix,
-                            "mean_average_precision": self._mean_average_precision}
-        all_names = list(__all_metrics__.keys())
-        if metric_names is None:
-            metric_names = all_names
-        for n in metric_names: assert n in all_names
-        self.metrics = {m: __all_metrics__[m] for m in metric_names}
+    def __init__(self, n_classes=5):
         self.n_classes = n_classes
-    
+
     def __call__(self, out, target):
         """
+        Compute the mean average precision across all classes.
+
         Args:
-            out (torch.Tensor): Model output
-            target (torch.Tensor): Target labels
+            out (torch.Tensor): Model output probabilities for each class.
+            target (torch.Tensor): Target binary labels for each class.
+
+        Returns:
+            float: Mean average precision score.
         """
-        pred = out.argmax(dim=1)
-        result = {m: self.metrics[m](out, pred, target) for m in self.metrics.keys()}
-        return result
-    
-    def _accuracy(self, out, pred, target):
-        acc = (pred == target).float().detach().mean()
-        return acc.item()
+        mAP = self._mean_average_precision(out, target)
+        return {"mean_average_precision": mAP}
 
-    def _class_level_accuracy(self, out, pred, target):
-        per_class_acc = {}
-        for c in range(self.n_classes):
-            count = (target == c).sum().detach().item()
-            if count == 0:
-                continue
-            class_true = ((pred == target) * (target == c)).float().sum().item()
-            per_class_acc[c] = (class_true, count)
-        return per_class_acc
-    
-    def _confusion_matrix(self, out, pred, target):
-        y_true = target.detach().cpu()
-        y_pred = pred.detach().cpu()
-        return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
-
-    # def _mean_average_precision(self, out, pred, target):
-    #     average_precisions = []
-    #     for c in range(self.n_classes):
-    #         class_scores = out[:, c].detach()
-    #         true_class = (target == c).int().detach()
-
-    #         precision, recall, _ = precision_recall_curve(true_class.cpu().numpy(), class_scores.cpu().numpy())
-    #         ap = auc(recall, precision)
-    #         average_precisions.append(ap)
-
-    #     return np.mean(average_precisions)
-
-    def _mean_average_precision(self, out, pred, target):
+    def _mean_average_precision(self, out, target):
         average_precisions = []
-        for c in range(self.n_classes):
-            class_scores = out[:, c].detach().cpu().numpy()
-            true_class = (target == c).detach().cpu().numpy()
+        out = out.detach().cpu().numpy()
+        target = target.detach().cpu().numpy()
 
+        for c in range(self.n_classes):
+            class_scores = out[:, c]
+            true_class = target[:, c]
             ap = average_precision_score(true_class, class_scores)
             average_precisions.append(ap)
 
-        return np.mean(average_precisions)
+        mean_ap = np.mean(average_precisions)
+        return mean_ap
