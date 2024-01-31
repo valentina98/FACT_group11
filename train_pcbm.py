@@ -90,9 +90,16 @@ def main(args, concept_bank, backbone, preprocess):
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
-    # Sorry for the model path hack. Probably i'll change this later.
-    model_path = os.path.join(args.out_dir,
+    # For ViT models, we need to save the model in a different format.
+    if "ViT" in args.concept_bank:
+        new_backbone_name = args.backbone_name.replace('/', '-')
+        model_path = os.path.join(args.out_dir,
+                              f"pcbm_{args.dataset}__{new_backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}.ckpt")
+    else:
+        # Sorry for the model path hack. Probably i'll change this later.
+        model_path = os.path.join(args.out_dir,
                               f"pcbm_{args.dataset}__{args.backbone_name}__{conceptbank_source}__lam:{args.lam}__alpha:{args.alpha}__seed:{args.seed}.ckpt")
+
     torch.save(posthoc_layer, model_path)
 
     # Again, a sad hack.. Open to suggestions
