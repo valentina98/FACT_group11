@@ -77,7 +77,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             out, projections = posthoc_layer(batch_X, return_dist=True)
             
             # ??
-            batch_Y = batch_Y.float()
+            # batch_Y = batch_Y.float()
 
             cls_loss = cls_criterion(out, batch_Y)
             loss = cls_loss + args.l2_penalty*(posthoc_layer.residual_classifier.weight**2).mean()
@@ -91,7 +91,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
 
         all_train_preds = torch.cat(all_train_preds)
         all_train_labels = torch.cat(all_train_labels)
-        train_mAP = computer._mean_average_precision(all_train_preds, all_train_preds.argmax(dim=1), all_train_labels)
+        train_mAP = computer._mean_average_precision(all_train_preds, all_train_labels)
         epoch_summary["mAP"].update(train_mAP)
 
         summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
