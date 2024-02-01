@@ -142,7 +142,7 @@ def main(args):
             print("Early stopping triggered")
             break
 
-    test_accuracy = evaluate(model, test_loader, args.device)
+    test_loss, test_accuracy = evaluate(model, test_loader, criterion, args.device)
     print(f"Final Test Accuracy: {test_accuracy:.4f}")
 
 if __name__ == "__main__":
