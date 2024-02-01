@@ -50,27 +50,22 @@ def main(args,train_loader, test_loader, classes):
             optim.step()
             optim.zero_grad()
 
-    model.eval()
-    predictions, true_labels = [], []
-    with torch.no_grad():
-        for texts, labels in tqdm(test_loader):
-            labels = labels.to(device)
+        model.eval()
+        predictions, true_labels = [], []
+        with torch.no_grad():
+            for texts, labels in tqdm(test_loader):
+                labels = labels.to(device)
 
-            # Tokenize the texts in the batch
-            encodings = tokenizer(texts, padding=True, truncation=True, max_length=512, return_tensors='pt')
-            input_ids = encodings['input_ids'].to(device)
-            attention_mask = encodings['attention_mask'].to(device)
+                encodings = tokenizer(texts, padding=True, truncation=True, max_length=512, return_tensors='pt')
+                input_ids = encodings['input_ids'].to(device)
+                attention_mask = encodings['attention_mask'].to(device)
 
-            # Forward pass
-            outputs = model(input_ids, attention_mask=attention_mask)
-            logits = outputs.logits
-            predictions.extend(logits.argmax(dim=-1).cpu().numpy())
-            true_labels.extend(labels.cpu().numpy())
-            accuracy = accuracy_score(true_labels, predictions)
-            print(f"Accuracy: {accuracy}")
-
-    accuracy = accuracy_score(true_labels, predictions)
-    print(f"Accuracy: {accuracy}")
+                outputs = model(input_ids, attention_mask=attention_mask)
+                logits = outputs.logits
+                predictions.extend(logits.argmax(dim=-1).cpu().numpy())
+                true_labels.extend(labels.cpu().numpy())
+                accuracy = accuracy_score(true_labels, predictions)
+                print(f"Accuracy: {accuracy}")
 
 if __name__ == "__main__":
     args = config()
