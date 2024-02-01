@@ -17,7 +17,7 @@ DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
 
 
 # Ham10000 can be obtained from : https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
-HAM10K_DATA_DIR = "/content/FACT_group11/datasets/broden_concepts/"
+HAM10K_DATA_DIR = "/content/FACT_group11/datasets/ham10000/"
 
 
 # BRODEN concept bank
