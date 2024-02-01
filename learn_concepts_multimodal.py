@@ -171,6 +171,25 @@ if __name__ == "__main__":
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
         learn_conceptbank(args, all_concepts, args.classes)
+        
+    elif args.classes == "coco_biased":
+        # Define the 20 biased COCO classes
+        biased_classes = ['cup', 'wine glass', 'handbag', 'apple', 'car', 'bus', 
+                          'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
+                          'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
+                          'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
+        # Generate and clean concepts
+        all_concepts = get_concept_data(biased_classes)
+        all_concepts = clean_concepts(all_concepts)
+        all_concepts = list(set(all_concepts).difference(set(biased_classes)))
+        # Recurse in the conceptnet graph if specified
+        for i in range(1, args.recurse):
+            all_concepts = get_concept_data(all_concepts)
+            all_concepts = list(set(all_concepts))
+            all_concepts = clean_concepts(all_concepts)
+            all_concepts = list(set(all_concepts).difference(set(biased_classes)))
+        # Generate the concept bank
+        learn_conceptbank(args, all_concepts, "coco_biased")
 
     else:
         raise ValueError(f"Unknown classes: {args.classes}. Define your dataset here!")
