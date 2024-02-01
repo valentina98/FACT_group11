@@ -1,25 +1,25 @@
 import torch
-from torch.utils.data import DataLoader
+from data import get_dataset
 from transformers import BertTokenizer, BertForSequenceClassification
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 import argparse
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from data import get_dataset
 
 def config():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", default="20ng", type=str)
+    parser.add_argument("--dataset", default="20ng_val", type=str)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu", type=str)
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--batch_size", default=16, type=int)
     parser.add_argument("--num_workers", default=2, type=int)
     parser.add_argument("--epochs", default=3, type=int)
-    parser.add_argument("--lr", default=5e-5, type=float)
+    parser.add_argument("--lr", default=5e-3, type=float)
     return parser.parse_args()
 
 def main(args):
-    # Assuming get_dataset is defined elsewhere and returns the necessary loaders
     train_loader, test_loader, classes, val_loader = get_dataset(args)
 
     device = torch.device(args.device)
