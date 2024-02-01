@@ -83,9 +83,18 @@ def run_linear_probe(args, train_data, test_data):
     print("Test probabilities shape:", test_probabilities.shape)
 
     # Calculate mAP
-    train_mAP = average_precision_score(train_labels, train_probabilities, average="macro")
-    test_mAP = average_precision_score(test_labels, test_probabilities, average="macro")
+        # Function to compute class-wise AP
+    def compute_class_wise_AP(labels, probabilities):
+        AP_scores = []
+        for i in range(labels.shape[1]):  # Loop over each class
+            AP = average_precision_score(labels[:, i], probabilities[:, i])
+            AP_scores.append(AP)
+        return np.mean(AP_scores)  # Return the mean of AP scores across all classes
 
+    # Calculate class-wise mAP
+    train_mAP = compute_class_wise_AP(train_labels, train_probabilities)
+    test_mAP = compute_class_wise_AP(test_labels, test_probabilities)
+    
     run_info = {
         "train_mAP": train_mAP,
         "test_mAP": test_mAP
