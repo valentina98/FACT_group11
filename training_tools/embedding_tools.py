@@ -64,13 +64,23 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         test_proj_file = f"test-proj_{args.dataset}__{new_backbone_name}__{conceptbank_source}.npy"
         train_lbls_file = f"train-lbls_{args.dataset}__{new_backbone_name}__{conceptbank_source}_lbls.npy"
         test_lbls_file = f"test-lbls_{args.dataset}__{new_backbone_name}__{conceptbank_source}_lbls.npy"
-    else: 
-        train_file = os.path.join(args.out_dir, train_file)
-        test_file = os.path.join(args.out_dir, test_file)
-        train_proj_file = os.path.join(args.out_dir, train_proj_file)
-        test_proj_file = os.path.join(args.out_dir, test_proj_file)
-        train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
-        test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
+    else:
+        # To make it easier to analyize results/rerun with different params, we'll extract the embeddings and save them
+        train_file = f"train-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
+        test_file = f"test-embs_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
+        train_proj_file = f"train-proj_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
+        test_proj_file = f"test-proj_{args.dataset}__{args.backbone_name}__{conceptbank_source}.npy"
+        train_lbls_file = f"train-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
+        test_lbls_file = f"test-lbls_{args.dataset}__{args.backbone_name}__{conceptbank_source}_lbls.npy"
+        
+    
+    train_file = os.path.join(args.out_dir, train_file)
+    test_file = os.path.join(args.out_dir, test_file)
+    train_proj_file = os.path.join(args.out_dir, train_proj_file)
+    test_proj_file = os.path.join(args.out_dir, test_proj_file)
+    train_lbls_file = os.path.join(args.out_dir, train_lbls_file)
+    test_lbls_file = os.path.join(args.out_dir, test_lbls_file)
+    
 
     if os.path.exists(train_proj_file):
         train_embs = np.load(train_file)
@@ -80,10 +90,11 @@ def load_or_compute_projections(args, backbone, posthoc_layer, train_loader, tes
         train_lbls = np.load(train_lbls_file)
         test_lbls = np.load(test_lbls_file)
 
-    else:
+    else: 
+        
         train_embs, train_projs, train_lbls = get_projections(args, backbone, posthoc_layer, train_loader)
         test_embs, test_projs, test_lbls = get_projections(args, backbone, posthoc_layer, test_loader)
-
+    
         np.save(train_file, train_embs)
         np.save(test_file, test_embs)
         np.save(train_proj_file, train_projs)
