@@ -55,43 +55,15 @@ def get_single_concept_data(cls_name,type="image"):
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
 
+        #FormOf relations
         formof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/FormOf&start=/c/en/{}"
         obj = requests.get(formof_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
-
+            
+        #Is relations
         isa_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
         obj = requests.get(isa_query.format(cls_name, cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-
-        atlocation_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/AtLocation&start=/c/en/{}"
-        obj = requests.get(atlocation_query.format(cls_name, cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-
-        partof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&start=/c/en/{}"
-        obj = requests.get(partof_query.format(cls_name, cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-
-        hascontext_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasContext&start=/c/en/{}"
-        obj = requests.get(hascontext_query.format(cls_name, cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
- 
-        causes_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Causes&start=/c/en/{}"
-        obj = requests.get(causes_query.format(cls_name, cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-
-        hassubevent_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasSubevent&start=/c/en/{}"
-        obj = requests.get(hassubevent_query.format(cls_name, cls_name)).json()
-        for edge in obj["edges"]:
-            all_concepts.append(edge['end']['label'])
-        
-        motivatedbygoal_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MotivatedByGoal&start=/c/en/{}"
-        obj = requests.get(motivatedbygoal_query.format(cls_name, cls_name)).json()
         for edge in obj["edges"]:
             all_concepts.append(edge['end']['label'])
 
