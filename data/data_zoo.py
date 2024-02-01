@@ -182,6 +182,7 @@ def get_dataset(args, preprocess=None):
 
         idx_to_class = {i: class_name for i, class_name in enumerate(train_data.target_names)}
         classes = train_data.target_names
+        return train_loader, test_loader, classes, val_loader
 
 
     else:

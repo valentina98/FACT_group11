@@ -51,6 +51,7 @@ def main(args):
         print(f"Epoch {epoch + 1}/{args.epochs} - Training Loss: {avg_loss}")
 
         model.eval()
+        predictions, true_labels = [], []
         total_val_loss = 0
         with torch.no_grad():
             for batch in tqdm(val_loader):
@@ -62,6 +63,13 @@ def main(args):
                 outputs = model(**inputs, labels=labels)
 
                 total_val_loss += outputs.loss.item()
+                logits = outputs.logits
+                predictions.extend(torch.argmax(logits, dim=1).cpu().numpy())
+                true_labels.extend(labels.cpu().numpy())
+
+        accuracy = accuracy_score(true_labels, predictions)
+        print(f"Val Accuracy: {accuracy}")
+                
 
         avg_val_loss = total_val_loss / len(val_loader)
         print(f"Epoch {epoch + 1}/{args.epochs} - Validation Loss: {avg_val_loss}")
