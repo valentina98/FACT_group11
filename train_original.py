@@ -63,7 +63,7 @@ def train(model, train_loader, criterion, optimizer, device):
 
     return total_loss / len(train_loader)
 
-def evaluate(model, loader, criterion, device):
+def evaluate(model, loader, criterion, device, test=False):
     model.eval()
     total_loss = 0.0
     total = 0
@@ -74,8 +74,9 @@ def evaluate(model, loader, criterion, device):
             labels = labels.to(device)
 
             outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            total_loss += loss.item() * inputs.size(0)
+            if not test:
+                loss = criterion(outputs, labels)
+                total_loss += loss.item() * inputs.size(0)
 
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
@@ -142,7 +143,7 @@ def main(args):
             print("Early stopping triggered")
             break
 
-    test_loss, test_accuracy = evaluate(model, test_loader, criterion, args.device)
+    test_loss, test_accuracy = evaluate(model, test_loader, criterion, args.device,test=True)
     print(f"Final Test Accuracy: {test_accuracy:.4f}")
 
 if __name__ == "__main__":
