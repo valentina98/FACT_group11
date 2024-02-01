@@ -1,13 +1,36 @@
 import os
 import pickle
 import torch
-
+import gzip
 import pandas as pd
 import numpy as np
 from PIL import Image
-from torch.utils.data import DataLoader
 from .constants import CUB_PROCESSED_DIR
+from torch.nn.utils.rnn import pad_sequence
+from transformers import BertTokenizer
+import nltk
+import os
+from nltk.corpus import framenet as fn
+from torch.utils.data import Dataset, DataLoader
+nltk.download('framenet_v17')
 
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+class FrameNetDataset(Dataset):
+    def __init__(self, texts, tokenizer):
+        self.texts = texts
+        self.tokenizer = tokenizer
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        text = self.texts[idx]
+        encoded_input = self.tokenizer(text, add_special_tokens=True, truncation=True, max_length=512)
+        # Convert to tensors and return as a tuple
+        input_ids = torch.tensor(encoded_input['input_ids'], dtype=torch.long)
+        attention_mask = torch.tensor(encoded_input['attention_mask'], dtype=torch.long)
+        return input_ids, attention_mask
 
 def cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
     from .cub import CUBConceptDataset, get_concept_dicts
@@ -155,9 +178,71 @@ def broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
             "neg": neg_loader
         }
     return concept_loaders
+
+def extract_frame_data(sentence):
+    frame_data = []
+    for annSet in sentence.annotationSet:
+        if annSet.frameName:
+            frame_data.append(annSet.frameName)
+    return frame_data
+
+def collate_fn(batch):
+    input_ids, attention_masks = zip(*batch)
+
+    input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=tokenizer.pad_token_id)
+    attention_masks_padded = pad_sequence(attention_masks, batch_first=True, padding_value=0)
+
+    return input_ids_padded, attention_masks_padded
+
+def load_all_data(chunks_dir):
+    combined_data = {}
+
+    chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith('framenet_sentences_') and f.endswith('.pkl.gz')]
+    
+    for chunk_file in chunk_files:
+        file_path = os.path.join(chunks_dir, chunk_file)
+        with gzip.open(file_path, 'rb') as file:
+            frame_data = pickle.load(file)
+            for frame, data in frame_data.items():
+                if frame not in combined_data:
+                    combined_data[frame] = {'positive': [], 'negative': []}
+                combined_data[frame]['positive'].extend(data['positive'])
+                combined_data[frame]['negative'].extend(data['negative'])
+
+    return combined_data
+
+def generate_negative_samples(combined_data, frame_to_exclude, num_samples):
+    all_other_positive_samples = []
+    for frame, data in combined_data.items():
+        if frame != frame_to_exclude:
+            all_other_positive_samples.extend(data['positive'])
+    
+    return np.random.choice(all_other_positive_samples, 2*num_samples, replace=len(all_other_positive_samples) < 2*num_samples)
+
+def framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed):
+    np.random.seed(seed)
+    concept_loaders = {}
+    combined_data = load_all_data("/content/drive/MyDrive/Colab Notebooks/")
+    for frame, data in combined_data.items():
+        try:
+            pos_samples = np.random.choice(data['positive'], 2*n_samples, replace=len(data['positive']) < 2*n_samples)
+            neg_samples = generate_negative_samples(combined_data, frame, n_samples)
+
+            pos_dataset = FrameNetDataset(pos_samples, tokenizer=tokenizer)
+            neg_dataset = FrameNetDataset(neg_samples, tokenizer=tokenizer)
+
+            pos_loader = DataLoader(pos_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+            neg_loader = DataLoader(neg_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+
+            concept_loaders[frame] = {'pos': pos_loader, 'neg': neg_loader}
+        except:
+            print("Skipping " + str(frame))
+
+    return concept_loaders
         
     
 def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, num_workers=4, seed=1):
+
     if dataset_name == "cub":
        return cub_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     
@@ -166,6 +251,8 @@ def get_concept_loaders(dataset_name, preprocess, n_samples=50, batch_size=100, 
     
     elif dataset_name == "broden":
         return broden_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
+    
+    elif dataset_name == "frame":
+        return framenet_concept_loaders(preprocess, n_samples, batch_size, num_workers, seed)
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
-    

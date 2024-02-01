@@ -26,9 +26,10 @@ def config():
     parser.add_argument("--batch-size", default=64, type=int)
     parser.add_argument("--dataset", default="cub", type=str)
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
-    parser.add_argument("--num-epochs", default=20, type=int)
+    parser.add_argument("--num-epochs", default=10, type=int)
     parser.add_argument("--lr", default=0.01, type=float)
-    parser.add_argument("--l2-penalty", default=0.001, type=float)
+    parser.add_argument("--l2-penalty", default=0.01, type=float)
+    parser.add_argument("--num-workers", default=2, type=int)
     return parser.parse_args()
 
 
@@ -89,7 +90,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
         latest_info["args"] = args
         latest_info["train_acc"] = epoch_summary["Accuracy"]
         latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"])
+        print("Final test acc: ", latest_info["test_acc"].avg)
     return latest_info
 
 

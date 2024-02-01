@@ -1,7 +1,22 @@
 from torchvision import datasets
 import torch
 import os
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import LabelEncoder
+import torch
+from torch.utils.data import TensorDataset, DataLoader
 
+class TextDataset(torch.utils.data.Dataset):
+    def __init__(self, texts, labels):
+        self.texts = texts
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        return self.texts[idx], self.labels[idx]
 
 def get_dataset(args, preprocess=None):
     if args.dataset == "cifar10":
@@ -62,6 +77,26 @@ def get_dataset(args, preprocess=None):
         train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
+    
+    elif args.dataset == "20ng":
+        train_data = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+        test_data = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
+
+        encoder = LabelEncoder()
+        y_train = encoder.fit_transform(train_data.target)
+        y_test = encoder.transform(test_data.target)
+
+        y_train_tensor = torch.tensor(y_train, dtype=torch.long)
+        y_test_tensor = torch.tensor(y_test, dtype=torch.long)
+
+        train_dataset = TextDataset(train_data.data, y_train_tensor)
+        test_dataset = TextDataset(test_data.data, y_test_tensor)
+
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+
+        idx_to_class = {i: class_name for i, class_name in enumerate(train_data.target_names)}
+        classes = train_data.target_names
 
 
     else:

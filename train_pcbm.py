@@ -69,6 +69,7 @@ def run_linear_probe(args, train_data, test_data):
 
 
 def main(args, concept_bank, backbone, preprocess):
+    print(concept_bank.vectors.shape)
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
     
     # Get a clean conceptbank string

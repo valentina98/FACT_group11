@@ -6,7 +6,19 @@ import clip
 import argparse
 import numpy as np
 from tqdm import tqdm
+import re
+import sklearn
+from sklearn.datasets import fetch_20newsgroups
+import torch.nn as nn
 
+class DimensionReducer(nn.Module):
+    def __init__(self, input_dim=1024, output_dim=768):
+        super(DimensionReducer, self).__init__()
+        self.reducer = nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        x = x.to(dtype=self.reducer.weight.dtype)
+        return self.reducer(x)
 
 def config():
     parser = argparse.ArgumentParser()
@@ -18,43 +30,103 @@ def config():
     return parser.parse_args()
 
 
-def get_single_concept_data(cls_name):
+def get_single_concept_data(cls_name,type="image"):
     if cls_name in concept_cache:
         return concept_cache[cls_name]
     
     all_concepts = []
-    
-    # Has relations
-    has_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasA&start=/c/en/{}"
-    obj = requests.get(has_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['end']['label'])
-    
-    # Made of relations
-    madeof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MadeOf&start=/c/en/{}"
-    obj = requests.get(madeof_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['end']['label'])
-    
-    # Properties of things
-    property_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasProperty&start=/c/en/{}"
-    obj = requests.get(property_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['end']['label'])
-    
-    # Categorization concepts
-    is_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
-    obj = requests.get(is_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        if edge["weight"] <= 1:
-            continue
-        all_concepts.append(edge['end']['label'])
-    
-    # Parts of things
-    parts_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&end=/c/en/{}"
-    obj = requests.get(parts_query.format(cls_name, cls_name)).json()
-    for edge in obj["edges"]:
-        all_concepts.append(edge['start']['label'])
+    cls_name = cls_name.lower()
+    if type == "nlp":
+        # RelatedTo relations
+        related_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/RelatedTo&start=/c/en/{}"
+        obj = requests.get(related_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        # Synonym relations
+        synonym_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Synonym&start=/c/en/{}"
+        obj = requests.get(synonym_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        # UsedFor relations
+        usedfor_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/UsedFor&start=/c/en/{}"
+        obj = requests.get(usedfor_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        formof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/FormOf&start=/c/en/{}"
+        obj = requests.get(formof_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        isa_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
+        obj = requests.get(isa_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        atlocation_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/AtLocation&start=/c/en/{}"
+        obj = requests.get(atlocation_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        partof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&start=/c/en/{}"
+        obj = requests.get(partof_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        hascontext_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasContext&start=/c/en/{}"
+        obj = requests.get(hascontext_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+ 
+        causes_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/Causes&start=/c/en/{}"
+        obj = requests.get(causes_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+        hassubevent_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasSubevent&start=/c/en/{}"
+        obj = requests.get(hassubevent_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        motivatedbygoal_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MotivatedByGoal&start=/c/en/{}"
+        obj = requests.get(motivatedbygoal_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+
+    else:
+        # Has relations
+        has_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasA&start=/c/en/{}"
+        obj = requests.get(has_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        # Made of relations
+        madeof_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/MadeOf&start=/c/en/{}"
+        obj = requests.get(madeof_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        # Properties of things
+        property_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/HasProperty&start=/c/en/{}"
+        obj = requests.get(property_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['end']['label'])
+        
+        # Categorization concepts
+        is_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/IsA&start=/c/en/{}"
+        obj = requests.get(is_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            if edge["weight"] <= 1:
+                continue
+            all_concepts.append(edge['end']['label'])
+        
+        # Parts of things
+        parts_query = "https://api.conceptnet.io/query?node=/c/en/{}&rel=/r/PartOf&end=/c/en/{}"
+        obj = requests.get(parts_query.format(cls_name, cls_name)).json()
+        for edge in obj["edges"]:
+            all_concepts.append(edge['start']['label'])
     
     all_concepts = [c.lower() for c in all_concepts]
     # Drop the "a " for concepts defined like "a {concept}".
@@ -68,13 +140,27 @@ def get_single_concept_data(cls_name):
     
     return all_concepts
 
+def preprocess_text_for_CLIP(text, max_length=77):
+    text = text.lower().strip()
+    text = re.sub(r"[^a-zA-Z0-9\s.,!?']", '', text)
 
-def get_concept_data(all_classes):
+    tokens = clip.tokenize([text], truncate=True)[0].numpy()
+
+    max_length -= 2
+
+    truncated_tokens = tokens[:max_length + 1]
+
+    processed_text = clip._tokenizer.decode(truncated_tokens.tolist())
+
+    return processed_text
+
+
+def get_concept_data(all_classes,type="image"):
     all_concepts = set()
     # Collect concepts that are relevant to each class
     for cls_name in all_classes:
         print(f"Pulling concepts for {cls_name}")
-        all_concepts |= get_single_concept_data(cls_name)
+        all_concepts |= get_single_concept_data(cls_name,type=type)
     return all_concepts
 
 
@@ -113,7 +199,6 @@ def clean_concepts(scenario_concepts):
     scenario_concepts_rec = list(set(scenario_concepts_rec))
     return scenario_concepts_rec
 
-
 @torch.no_grad()
 def learn_conceptbank(args, concept_list, scenario):
     concept_dict = {}
@@ -122,6 +207,10 @@ def learn_conceptbank(args, concept_list, scenario):
         text = clip.tokenize(f"{concept}").to("cuda")
         text_features = model.encode_text(text).cpu().numpy()
         text_features = text_features/np.linalg.norm(text_features)
+        if "20ng" in args.classes:
+            dimension_reducer = DimensionReducer(input_dim=1024, output_dim=768).to(args.device)
+            dimension_reducer.eval()
+            text_features = dimension_reducer(torch.from_numpy(text_features).to(args.device)).cpu().numpy()
         # store concept vectors in a dictionary. Adding the additional terms to be consistent with the
         # `ConceptBank` class (see `concepts/concept_utils.py`).
         concept_dict[concept] = (text_features, None, None, 0, {})
@@ -137,7 +226,6 @@ def learn_conceptbank(args, concept_list, scenario):
     
     pickle.dump(concept_dict, open(concept_dict_path, 'wb'))
     print(f"Dumped to : {concept_dict_path}")
-
 
 if __name__ == "__main__":
     args = config()
@@ -177,6 +265,45 @@ if __name__ == "__main__":
             all_concepts = list(set(all_concepts))
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
+        learn_conceptbank(args, all_concepts, args.classes)
+
+    elif args.classes == "20ng":
+        newsgroup_name_mapping = {
+            "alt.atheism": "Atheism",
+            "comp.graphics": "Computer Graphics",
+            "comp.os.ms-windows.misc": "Windows Operating System",
+            "comp.sys.ibm.pc.hardware": "IBM",
+            "comp.sys.mac.hardware": "Macintosh",
+            "comp.windows.x": "GUI",
+            "misc.forsale": "Marketplace",
+            "rec.autos": "Automobiles",
+            "rec.motorcycles": "Motorbikes",
+            "rec.sport.baseball": "Baseball",
+            "rec.sport.hockey": "Hockey",
+            "sci.crypt": "Cryptography",
+            "sci.electronics": "Electronics",
+            "sci.med": "Medicine",
+            "sci.space": "Space Exploration",
+            "soc.religion.christian": "Christianity",
+            "talk.politics.guns": "Gun Politics",
+            "talk.politics.mideast": "Middle Eastern Politics",
+            "talk.politics.misc": "General Politics",
+            "talk.religion.misc": "Religion"
+        }
+        newsgroups_data = fetch_20newsgroups(subset='all')
+        all_classes = [newsgroup_name_mapping.get(name, name) for name in newsgroups_data.target_names]
+
+        all_concepts = get_concept_data(all_classes,type="nlp")
+        print(all_concepts)
+        all_concepts = clean_concepts(all_concepts)
+        all_concepts = list(set(all_concepts).difference(set(all_classes)))
+
+        for i in range(1, args.recurse):
+            all_concepts = get_concept_data(all_concepts,type="nlp")
+            all_concepts = list(set(all_concepts))
+            all_concepts = clean_concepts(all_concepts)
+            all_concepts = list(set(all_concepts).difference(set(all_classes)))
+
         learn_conceptbank(args, all_concepts, args.classes)
 
     else:

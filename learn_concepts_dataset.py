@@ -16,7 +16,7 @@ def config():
     parser.add_argument("--dataset-name", default="cub", type=str)
     parser.add_argument("--out-dir", required=True, type=str)
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--seed", default=1, type=int, help="Random seed")
+    parser.add_argument("--seed", default=42, type=int, help="Random seed")
     parser.add_argument("--num-workers", default=4, type=int, help="Number of workers in the data loader.")
     parser.add_argument("--batch-size", default=100, type=int, help="Batch size in the concept loader.")
     parser.add_argument("--C", nargs="+", default=[0.01, 0.1], type=float, help="Regularization parameter for SVMs.")
@@ -27,7 +27,7 @@ def config():
 def main():
     args = config()
     n_samples = args.n_samples
-
+    nlp = True if args.dataset_name == "frame" else False
     # Bottleneck part of model
     backbone, preprocess = get_model(args, args.backbone_name)
     backbone = backbone.to(args.device)
@@ -44,7 +44,7 @@ def main():
     for concept_name, loaders in concept_loaders.items():
         pos_loader, neg_loader = loaders['pos'], loaders['neg']
         # Get CAV for each concept using positive/negative image split
-        cav_info = learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, args.C, device=args.device)
+        cav_info = learn_concept_bank(pos_loader, neg_loader, backbone, n_samples, args.C, device=args.device, nlp=nlp)
         
         # Store CAV train acc, val acc, margin info for each regularization parameter and each concept
         for C in args.C:
@@ -53,12 +53,14 @@ def main():
 
     # Save CAV results    
     for C in concept_libs.keys():
+
         # If the clip model is a ViT model, then the concept bank is saved in a different format
         if "ViT" in args.backbone_name:
             new_backbone_name = args.backbone_name.replace('/', '-')
-            lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{new_backbone_name}_{C}_{args.n_samples}.pkl")
+            lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{new_backbone_name}_{C}_{args.n_samples}_{args.seed}.pkl")
         else:
-            lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{args.backbone_name}_{C}_{args.n_samples}.pkl")
+            lib_path = os.path.join(args.out_dir, f"{args.dataset_name}_{args.backbone_name}_{C}_{args.n_samples}_{args.seed}.pkl")
+
         with open(lib_path, "wb") as f:
             pickle.dump(concept_libs[C], f)
         print(f"Saved to: {lib_path}")        
