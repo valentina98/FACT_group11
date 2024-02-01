@@ -10,7 +10,14 @@ CUB_PROCESSED_DIR = "/content/FACT_group11/datasets/class_attr_data_10"
 
 # Derm data constants
 # Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html
-DERM7_FOLDER = "/content/FACT_group11/datasets/derm7pt/"
+DERM7_FOLDER = "/content/FACT_group11/datasets/derm7pt/release_v0/"
+DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
+DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")
+DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
+
+# Derm data constants
+# Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html
+DERM7_FOLDER = "/datasets/derm7pt/"
 DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
 DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")
 DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
