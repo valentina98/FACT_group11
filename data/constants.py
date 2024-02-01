@@ -15,12 +15,6 @@ DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
 DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")
 DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
 
-# Derm data constants
-# Derm7pt is obtained from : https://derm.cs.sfu.ca/Welcome.html
-DERM7_FOLDER = "/datasets/derm7pt/"
-DERM7_META = os.path.join(DERM7_FOLDER, "meta", "meta.csv")
-DERM7_TRAIN_IDX = os.path.join(DERM7_FOLDER, "meta", "train_indexes.csv")
-DERM7_VAL_IDX = os.path.join(DERM7_FOLDER, "meta", "valid_indexes.csv")
 
 # Ham10000 can be obtained from : https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
 HAM10K_DATA_DIR = "/content/FACT_group11/datasets/broden_concepts/"
