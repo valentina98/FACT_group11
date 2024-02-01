@@ -133,43 +133,45 @@ class PosthocLinearMultilabelCBM(nn.Module):
         return self.classifiers.parameters()
     
     def classifier_weights(self):
-        return self.classifiers.weight
-    
-    def set_weights(self, weights, bias):
+        weights = [classifier.weight for classifier in self.classifiers]
+        biases = [classifier.bias for classifier in self.classifiers]
+        return weights, biases
+
+    def set_weights(self, weights, biases):
         for i, classifier in enumerate(self.classifiers):
-            classifier.weight.data = torch.from_numpy(weights[i]).float()
-            classifier.bias.data = torch.from_numpy(bias[i]).float()
+            weight = torch.tensor(weights[i]).float().to(classifier.weight.device)
+            bias = torch.tensor(biases[i]).float().to(classifier.bias.device)
+            # Set the weights and biases
+            classifier.weight.data.copy_(weight)
+            classifier.bias.data.copy_(bias)
 
     def analyze_classifier(self, k=5, print_lows=False):
-        weights = self.classifiers.weight.clone().detach()
         output = []
 
-        if len(self.idx_to_class) == 2:
-            weights = [weights.squeeze(), weights.squeeze()]
-        
         for idx, cls in self.idx_to_class.items():
-            cls_weights = weights[idx]
+            classifier = self.classifiers[idx]
+            cls_weights = classifier.weight.squeeze().detach()
+
+            # Find top-k weights
             topk_vals, topk_indices = torch.topk(cls_weights, k=k)
-            topk_indices = topk_indices.detach().cpu().numpy()
+            topk_indices = topk_indices.cpu().numpy()
             topk_concepts = [self.names[j] for j in topk_indices]
             analysis_str = [f"Class : {cls}"]
             for j, c in enumerate(topk_concepts):
                 analysis_str.append(f"\t {j+1} - {c}: {topk_vals[j]:.3f}")
-            analysis_str = "\n".join(analysis_str)
-            output.append(analysis_str)
+            output.append("\n".join(analysis_str))
 
+            # Optionally print lowest weights
             if print_lows:
                 topk_vals, topk_indices = torch.topk(-cls_weights, k=k)
-                topk_indices = topk_indices.detach().cpu().numpy()
-                topk_concepts = [self.names[j] for j in topk_indices]
+                topk_indices = topk_indices.cpu().numpy()
+                lowest_concepts = [self.names[j] for j in topk_indices]
                 analysis_str = [f"Class : {cls}"]
-                for j, c in enumerate(topk_concepts):
+                for j, c in enumerate(lowest_concepts):
                     analysis_str.append(f"\t {j+1} - {c}: {-topk_vals[j]:.3f}")
-                analysis_str = "\n".join(analysis_str)
-                output.append(analysis_str)
+                output.append("\n".join(analysis_str))
 
-        analysis = "\n".join(output)
-        return analysis
+        return "\n".join(output)
 
 
 class PosthocHybridCBM(nn.Module):
