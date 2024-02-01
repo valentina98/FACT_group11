@@ -124,9 +124,9 @@ def main(args):
     criterion = nn.CrossEntropyLoss()
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
-    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=2, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=1, verbose=True)
 
-    early_stopping = EarlyStopping(patience=5, verbose=True, delta=0.01)
+    early_stopping = EarlyStopping(patience=7, verbose=True, delta=0.01)
 
     for epoch in range(args.epochs):
         train_loss = train(model, train_loader, criterion, optimizer, args.device)
