@@ -109,7 +109,7 @@ class EarlyStopping:
             self.counter = 0
 
 def main(args):
-
+    train_loader, val_loader, test_loader, classes = get_dataset(args, preprocess)
     if "resnet18_cub" in args.backbone_name:
         model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name, full_model=True)
     else:
