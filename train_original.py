@@ -117,7 +117,7 @@ def main(args):
 
     criterion = nn.CrossEntropyLoss()
     optimizer = AdamW(model.parameters(), lr=args.lr)
-    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=3, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=2, verbose=True)
 
     early_stopping = EarlyStopping(patience=5, verbose=True)
 
@@ -128,10 +128,8 @@ def main(args):
         accuracy = evaluate(model, test_loader, args.device)
         print(f"Epoch {epoch + 1}/{args.epochs}, Loss: {train_loss:.4f}, Accuracy: {accuracy:.4f}")
 
-        # Step the scheduler based on accuracy
         scheduler.step(accuracy)
 
-        # Early stopping check
         early_stopping(accuracy, model)
         if early_stopping.early_stop:
             print("Early stopping triggered")
