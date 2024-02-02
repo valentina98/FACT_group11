@@ -155,6 +155,7 @@ if __name__ == "__main__":
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(all_classes)))
         # Generate the concept bank.
+        print("all_concepts shape", np.array(all_concepts).shape)
         learn_conceptbank(args, all_concepts, args.classes)
         
     elif args.classes == "cifar100":
@@ -189,6 +190,7 @@ if __name__ == "__main__":
             all_concepts = clean_concepts(all_concepts)
             all_concepts = list(set(all_concepts).difference(set(biased_classes)))
         # Generate the concept bank
+        print("all_concepts shape", np.array(all_concepts).shape)
         learn_conceptbank(args, all_concepts, "coco_biased")
 
     else:
