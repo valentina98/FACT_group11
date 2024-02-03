@@ -137,11 +137,11 @@ def main(args):
         print(f"Epoch {epoch + 1}/{args.epochs}, Training Loss: {train_loss:.4f}, Validation Accuracy: {val_accuracy:.4f}")
 
         scheduler.step(val_loss)
-
+        """
         early_stopping(val_loss, model)
         if early_stopping.early_stop:
             print("Early stopping triggered")
-            break
+            break"""
 
     _, test_accuracy = evaluate(model, test_loader, criterion, args.device,test=True)
     print(f"Final Test Accuracy: {test_accuracy:.4f}")
