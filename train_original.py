@@ -110,7 +110,7 @@ class EarlyStopping:
             self.counter = 0
 
 def main(args):
-    train_loader, val_loader, test_loader, classes = get_dataset(args)
+    train_loader, test_loader, classes, val_loader = get_dataset(args)
     if "resnet18_cub" in args.backbone_name:
         model, backbone, preprocess = get_model(args, backbone_name=args.backbone_name, full_model=True)
     else:
@@ -120,14 +120,14 @@ def main(args):
 
     model.to(args.device)
 
-    train_loader, val_loader, test_loader, classes = get_dataset(args, preprocess)
+    train_loader, test_loader, classes, val_loader = get_dataset(args, preprocess)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = AdamW(model.parameters(), lr=args.lr)
 
-    scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=1, verbose=True)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=1, verbose=True)
 
-    early_stopping = EarlyStopping(patience=7, verbose=True, delta=0.01)
+    early_stopping = EarlyStopping(patience=7, verbose=True, delta=0.002)
 
     for epoch in range(args.epochs):
         train_loss = train(model, train_loader, criterion, optimizer, args.device)
@@ -143,7 +143,7 @@ def main(args):
             print("Early stopping triggered")
             break
 
-    test_loss, test_accuracy = evaluate(model, test_loader, criterion, args.device,test=True)
+    _, test_accuracy = evaluate(model, test_loader, criterion, args.device,test=True)
     print(f"Final Test Accuracy: {test_accuracy:.4f}")
 
 if __name__ == "__main__":
