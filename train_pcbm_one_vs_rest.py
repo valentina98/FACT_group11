@@ -70,10 +70,10 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     test_mean_avg_precision = np.mean(test_average_precisions)
 
     run_info = {
-        "train_accs": train_accs,
-        "test_accs": test_accs,
         "train_mean_avg_precision": train_mean_avg_precision,
         "test_mean_avg_precision": test_mean_avg_precision,
+        "train_accs": train_accs,
+        "test_accs": test_accs,
     }
 
     return run_info, np.array([clf.coef_ for clf in classifiers]), np.array([clf.intercept_ for clf in classifiers])
