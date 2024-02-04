@@ -148,12 +148,6 @@ def main(args, backbone, preprocess):
     train_loader = DataLoader(TensorDataset(torch.tensor(train_embs).float(), torch.tensor(train_lbls).long()), batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(TensorDataset(torch.tensor(test_embs).float(), torch.tensor(test_lbls).long()), batch_size=args.batch_size, shuffle=False)
     
-    for batch_X, batch_Y in tqdm(train_loader):
-        batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device)
-        print("Shape of batch_X before posthoc_layer:", batch_X.shape)
-        print("Shape of batch_Y before posthoc_layer:", batch_Y.shape)
-        break
-        
     # Initialize PCBM-h
     hybrid_model = PosthocHybridCBM(posthoc_layer)
     hybrid_model = hybrid_model.to(args.device)

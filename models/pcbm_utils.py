@@ -87,93 +87,6 @@ class PosthocLinearCBM(nn.Module):
         analysis = "\n".join(output)
         return analysis
 
-class PosthocLinearMultilabelCBM(nn.Module):
-    def __init__(self, concept_bank, backbone_name, idx_to_class=None, n_classes=5):
-        """
-        PosthocCBM Linear Layer. 
-        Takes an embedding as the input, outputs class-level predictions using only concept margins.
-        Args:
-            concept_bank (ConceptBank)
-            backbone_name (str): Name of the backbone, e.g. clip:RN50.
-            idx_to_class (dict, optional): A mapping from the output indices to the class names. Defaults to None.
-            n_classes (int, optional): Number of classes in the classification problem. Defaults to 5.
-        """
-        super(PosthocLinearMultilabelCBM, self).__init__()
-        # Get the concept information from the bank
-        self.backbone_name = backbone_name
-        self.cavs = concept_bank.vectors
-        self.intercepts = concept_bank.intercepts
-        self.norms = concept_bank.norms
-        self.names = concept_bank.concept_names.copy()
-        self.n_concepts = self.cavs.shape[0]
-
-        self.n_classes = n_classes
-        # Will be used to plot classifier weights nicely
-        self.idx_to_class = idx_to_class if idx_to_class else {i: i for i in range(self.n_classes)}
-
-        # A list of linear layers, one for each class
-        self.classifiers = nn.ModuleList([nn.Linear(self.n_concepts, 1) for _ in range(self.n_classes)])
-
-    def compute_dist(self, emb):
-        # Computing the geometric margin to the decision boundary specified by CAV.
-        margins = (torch.matmul(self.cavs, emb.T) +
-           self.intercepts) / (self.norms)
-        return margins.T
-
-    def forward(self, emb, return_dist=False):
-        x = self.compute_dist(emb)
-        outs = [classifier(x).squeeze() for classifier in self.classifiers]
-        out = torch.stack(outs, dim=1)  # Stacking outputs for each class
-        return (out, x) if return_dist else out
-    
-    def forward_projs(self, projs):
-        return self.classifiers(projs)
-    
-    def trainable_params(self):
-        return self.classifiers.parameters()
-    
-    def classifier_weights(self):
-        weights = [classifier.weight for classifier in self.classifiers]
-        biases = [classifier.bias for classifier in self.classifiers]
-        return weights, biases
-
-    def set_weights(self, weights, biases):
-        for i, classifier in enumerate(self.classifiers):
-            weight = torch.tensor(weights[i]).float().to(classifier.weight.device)
-            bias = torch.tensor(biases[i]).float().to(classifier.bias.device)
-            # Set the weights and biases
-            classifier.weight.data.copy_(weight)
-            classifier.bias.data.copy_(bias)
-
-    def analyze_classifier(self, k=5, print_lows=False):
-        output = []
-
-        for idx, cls in self.idx_to_class.items():
-            classifier = self.classifiers[idx]
-            cls_weights = classifier.weight.squeeze().detach()
-
-            # Find top-k weights
-            topk_vals, topk_indices = torch.topk(cls_weights, k=k)
-            topk_indices = topk_indices.cpu().numpy()
-            topk_concepts = [self.names[j] for j in topk_indices]
-            analysis_str = [f"Class : {cls}"]
-            for j, c in enumerate(topk_concepts):
-                analysis_str.append(f"\t {j+1} - {c}: {topk_vals[j]:.3f}")
-            output.append("\n".join(analysis_str))
-
-            # Optionally print lowest weights
-            if print_lows:
-                topk_vals, topk_indices = torch.topk(-cls_weights, k=k)
-                topk_indices = topk_indices.cpu().numpy()
-                lowest_concepts = [self.names[j] for j in topk_indices]
-                analysis_str = [f"Class : {cls}"]
-                for j, c in enumerate(lowest_concepts):
-                    analysis_str.append(f"\t {j+1} - {c}: {-topk_vals[j]:.3f}")
-                output.append("\n".join(analysis_str))
-
-        return "\n".join(output)
-
-
 class PosthocHybridCBM(nn.Module):
     def __init__(self, bottleneck: PosthocLinearCBM):
         """
@@ -191,13 +104,30 @@ class PosthocHybridCBM(nn.Module):
         self.n_classes = self.bottleneck.n_classes
         self.residual_classifier = nn.Linear(self.d_embedding, self.n_classes)
 
+    # def forward(self, emb, return_dist=False):
+    #     x = self.bottleneck.compute_dist(emb)
+    #     out = self.bottleneck.classifier(x) + self.residual_classifier(emb)
+    #     if return_dist:
+    #         return out, x
+    #     return out
+    
     def forward(self, emb, return_dist=False):
         x = self.bottleneck.compute_dist(emb)
-        out = self.bottleneck.classifier(x) + self.residual_classifier(emb)
+        print("Shape of x after compute_dist:", x.shape)
+
+        out_bottleneck = self.bottleneck.classifier(x)
+        print("Shape of out_bottleneck:", out_bottleneck.shape)
+
+        out_residual = self.residual_classifier(emb)
+        print("Shape of out_residual:", out_residual.shape)
+
+        out = out_bottleneck + out_residual
+        print("Shape of out:", out.shape)
+
         if return_dist:
             return out, x
         return out
-
+    
     def trainable_params(self):
         return self.residual_classifier.parameters()
     
@@ -206,51 +136,3 @@ class PosthocHybridCBM(nn.Module):
 
     def analyze_classifier(self):
         return self.bottleneck.analyze_classifier()
-
-class PosthocHybridMultilabelCBM(nn.Module):
-    def __init__(self, bottleneck: PosthocLinearMultilabelCBM):
-        """
-        PosthocCBM Hybrid Layer. 
-        Takes an embedding as the input, outputs class-level predictions.
-        Uses both the embedding and the concept predictions.
-        Args:
-            bottleneck (PosthocLinearMultilabelCBM): [description]
-        """
-        super(PosthocHybridMultilabelCBM, self).__init__()
-        # Get the concept information from the bank
-        self.bottleneck = bottleneck
-        # A single linear layer will be used as the classifier
-        self.d_embedding = self.bottleneck.cavs.shape[1]
-        self.n_classes = self.bottleneck.n_classes
-        # Create a separate linear layer for each class
-        self.residual_classifiers = nn.ModuleList([
-            nn.Linear(self.d_embedding, 1) for _ in range(self.n_classes)
-        ])
-
-    def forward(self, emb, return_dist=False):
-        x = self.bottleneck.compute_dist(emb)
-
-        # Apply each classifier in the bottleneck to the concept distances
-        concept_outs = [classifier(x).squeeze() for classifier in self.bottleneck.classifiers]
-        concept_out = torch.stack(concept_outs, dim=1)  # Stacking outputs for each class
-
-        # Apply each classifier in the residual classifiers to the input embeddings
-        residual_outs = [classifier(emb) for classifier in self.residual_classifiers]
-        residual_out = torch.cat(residual_outs, dim=1)  # Concatenating outputs for each class
-
-        # Combine the outputs from the bottleneck and the residual classifiers
-        out = concept_out + residual_out
-
-        if return_dist:
-            return out, x
-        return out
-
-    def trainable_params(self):
-        return self.residual_classifiers.parameters()
-    
-    def classifier_weights(self):
-        return self.residual_classifiers.weight
-
-    def analyze_classifier(self):
-        return self.bottleneck.analyze_classifier()
-
