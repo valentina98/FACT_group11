@@ -3,7 +3,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from data import get_dataset
 import argparse
-from torch.optim import AdamW
+from torch.optim import Adam
 from models import get_model
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
@@ -37,8 +37,6 @@ def get_model_final(args, backbone,num_labels):
     if "clip" in args.backbone_name:
         backbone = backbone.visual
         backbone.output_dim = backbone.output_dim
-    else:
-        return
 
     for param in backbone.parameters():
         param.requires_grad = False
@@ -123,7 +121,7 @@ def main(args):
     train_loader, test_loader, classes, val_loader = get_dataset(args, preprocess)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = AdamW(model.parameters(), lr=args.lr)
+    optimizer = Adam(model.parameters(), lr=args.lr)
 
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=1, verbose=True)
 
