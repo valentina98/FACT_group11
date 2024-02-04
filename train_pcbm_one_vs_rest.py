@@ -11,7 +11,6 @@ from concepts import ConceptBank
 from models import PosthocLinearMultilabelCBM, get_model
 from training_tools import load_or_compute_projections
 
-
 def config():
     parser = argparse.ArgumentParser()
     parser.add_argument("--concept-bank", required=True, type=str, help="Path to the concept bank")
@@ -40,27 +39,31 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     train_average_precisions = []
     test_average_precisions = []
     for class_idx in range(num_classes):
+        # Create binary labels for the current class
+        binary_train_labels = (train_labels == class_idx).astype(int)
+        binary_test_labels = (test_labels == class_idx).astype(int)
+
         # Train a separate classifier for each class
         classifier = SGDClassifier(random_state=args.seed, loss="log_loss",
                                    alpha=args.lam, l1_ratio=args.alpha, verbose=0,
                                    penalty="elasticnet", max_iter=10000)
         
-        classifier.fit(train_features, train_labels[:, class_idx])
+        classifier.fit(train_features, binary_train_labels)
         classifiers.append(classifier)
 
         # Predictions and accuracies for each class
         train_predictions = classifier.predict(train_features)
         test_predictions = classifier.predict(test_features)
 
-        train_accs.append(np.mean((train_labels[:, class_idx] == train_predictions).astype(float)) * 100.)
-        test_accs.append(np.mean((test_labels[:, class_idx] == test_predictions).astype(float)) * 100.)
+        train_accs.append(np.mean((binary_train_labels == train_predictions).astype(float)) * 100.)
+        test_accs.append(np.mean((binary_test_labels == test_predictions).astype(float)) * 100.)
 
         # Compute Average Precision for each class
         train_decision_scores = classifier.decision_function(train_features)
-        train_average_precisions.append(average_precision_score(train_labels[:, class_idx], train_decision_scores))
-
         test_decision_scores = classifier.decision_function(test_features)
-        test_average_precisions.append(average_precision_score(test_labels[:, class_idx], test_decision_scores))
+
+        train_average_precisions.append(average_precision_score(binary_train_labels, train_decision_scores))
+        test_average_precisions.append(average_precision_score(binary_test_labels, test_decision_scores))
 
     # Compute Mean Average Precision
     train_mean_avg_precision = np.mean(train_average_precisions)
