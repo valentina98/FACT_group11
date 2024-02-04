@@ -40,8 +40,8 @@ def get_model_final(args, backbone,num_labels):
     else:
         return
 
-    for param in backbone.parameters():
-        param.requires_grad = False
+    #for param in backbone.parameters():
+    #    param.requires_grad = False
 
     model = CustomClassifier(backbone, num_labels)
     return model
