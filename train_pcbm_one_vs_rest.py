@@ -30,12 +30,10 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
-    print("Train labels shape:", np.array(train_labels).shape)
-    print("Test labels shape:", np.array(test_labels).shape)
+    # print("Train labels shape:", np.array(train_labels).shape)
+    # print("Test labels shape:", np.array(test_labels).shape)
 
     classifiers = []
-    train_accs = []
-    test_accs = []
     train_average_precisions = []
     test_average_precisions = []
     for class_idx in range(num_classes):
@@ -51,13 +49,6 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         classifier.fit(train_features, binary_train_labels)
         classifiers.append(classifier)
 
-        # Predictions and accuracies for each class
-        train_predictions = classifier.predict(train_features)
-        test_predictions = classifier.predict(test_features)
-
-        train_accs.append(np.mean((binary_train_labels == train_predictions).astype(float)) * 100.)
-        test_accs.append(np.mean((binary_test_labels == test_predictions).astype(float)) * 100.)
-
         # Compute Average Precision for each class
         train_decision_scores = classifier.decision_function(train_features)
         test_decision_scores = classifier.decision_function(test_features)
@@ -72,8 +63,6 @@ def run_linear_probe(args, train_data, test_data, num_classes):
     run_info = {
         "train_mean_avg_precision": train_mean_avg_precision,
         "test_mean_avg_precision": test_mean_avg_precision,
-        "train_accs": train_accs,
-        "test_accs": test_accs,
     }
 
     return run_info, np.array([clf.coef_ for clf in classifiers]), np.array([clf.intercept_ for clf in classifiers])
