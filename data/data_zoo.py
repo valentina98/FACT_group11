@@ -21,7 +21,6 @@ class TextDataset(torch.utils.data.Dataset):
         return self.texts[idx], self.labels[idx]
 
 def get_dataset(args, preprocess=None):
-    np.random.seed(42)
     if args.dataset == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
                                     download=True, transform=preprocess)
