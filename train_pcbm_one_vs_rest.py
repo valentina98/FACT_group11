@@ -76,7 +76,7 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         "test_mean_avg_precision": test_mean_avg_precision,
     }
 
-    return run_info, [clf.coef_ for clf in classifiers], [clf.intercept_ for clf in classifiers]
+    return run_info, np.array([clf.coef_ for clf in classifiers]), np.array([clf.intercept_ for clf in classifiers])
 
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
@@ -113,9 +113,9 @@ def main(args, concept_bank, backbone, preprocess):
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
 
-    if num_classes > 1:
-        # Prints the Top-5 Concept Weigths for each class.
-        print(posthoc_layer.analyze_classifier(k=5))
+    # if num_classes > 1:
+    #     # Prints the Top-5 Concept Weigths for each class.
+    #     print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")
     print(run_info)
