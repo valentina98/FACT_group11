@@ -104,26 +104,9 @@ class PosthocHybridCBM(nn.Module):
         self.n_classes = self.bottleneck.n_classes
         self.residual_classifier = nn.Linear(self.d_embedding, self.n_classes)
 
-    # def forward(self, emb, return_dist=False):
-    #     x = self.bottleneck.compute_dist(emb)
-    #     out = self.bottleneck.classifier(x) + self.residual_classifier(emb)
-    #     if return_dist:
-    #         return out, x
-    #     return out
-    
     def forward(self, emb, return_dist=False):
         x = self.bottleneck.compute_dist(emb)
-        print("Shape of x after compute_dist:", x.shape)
-
-        out_bottleneck = self.bottleneck.classifier(x)
-        print("Shape of out_bottleneck:", out_bottleneck.shape)
-
-        out_residual = self.residual_classifier(emb)
-        print("Shape of out_residual:", out_residual.shape)
-
-        out = out_bottleneck + out_residual
-        print("Shape of out:", out.shape)
-
+        out = self.bottleneck.classifier(x) + self.residual_classifier(emb)
         if return_dist:
             return out, x
         return out

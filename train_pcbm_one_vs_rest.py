@@ -97,6 +97,10 @@ def main(args, concept_bank, backbone, preprocess):
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), num_classes)
     
+    print("run_info", run_info)
+    print("weights.shape", weights.shape)
+    print("bias.shape", bias.shape)
+
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
