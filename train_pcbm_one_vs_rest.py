@@ -86,12 +86,12 @@ def main(args, concept_bank, backbone, preprocess):
     
     run_info, weights, bias = run_linear_probe(args, (train_projs, train_lbls), (test_projs, test_lbls), num_classes)
     
-    print("run_info", run_info)
-    print("weights.shape", weights.shape)
-    print("bias.shape", bias.shape)
-
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
+
+    # Flatten the weights and bias
+    posthoc_layer.linear.weight = posthoc_layer.linear.weight.view(20, 170)
+    posthoc_layer.linear.bias = posthoc_layer.linear.bias.view(20)
 
     # Sorry for the model path hack. Probably i'll change this later.
     model_path = os.path.join(args.out_dir,
@@ -105,10 +105,6 @@ def main(args, concept_bank, backbone, preprocess):
     
     with open(run_info_file, "wb") as f:
         pickle.dump(run_info, f)
-
-    # if num_classes > 1:
-    #     # Prints the Top-5 Concept Weigths for each class.
-    #     print(posthoc_layer.analyze_classifier(k=5))
 
     print(f"Model saved to : {model_path}")
     print(run_info)
