@@ -65,7 +65,16 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         "test_mean_avg_precision": test_mean_avg_precision,
     }
 
-    return run_info, np.array([clf.coef_ for clf in classifiers]), np.array([clf.intercept_ for clf in classifiers])
+    # Extracting the weights and biases from the classifiers
+    weights = np.array([clf.coef_ for clf in classifiers])
+    biases = np.array([clf.intercept_ for clf in classifiers])
+
+    # Reshaping the weights and biases
+    # Each classifier's weights are 2D (e.g., [1, num_features]), we flatten them
+    reshaped_weights = weights.reshape(num_classes, -1)  # e.g., (num_classes, num_features)
+    reshaped_biases = biases.reshape(-1)  # Flatten to 1D array
+
+    return run_info, reshaped_weights, reshaped_biases
 
 def main(args, concept_bank, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)
@@ -88,10 +97,6 @@ def main(args, concept_bank, backbone, preprocess):
     
     # Convert from the SGDClassifier module to PCBM module.
     posthoc_layer.set_weights(weights=weights, bias=bias)
-
-    # Flatten the weights and bias
-    posthoc_layer.classifier.weight = posthoc_layer.classifier.weight.view(20, 170)
-    posthoc_layer.classifier.bias = posthoc_layer.classifier.bias.view(20)
 
     # Sorry for the model path hack. Probably i'll change this later.
     model_path = os.path.join(args.out_dir,
