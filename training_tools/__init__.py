@@ -25,6 +25,7 @@ class MetricComputer(object):
         __all_metrics__ = {"accuracy": self._accuracy, 
                             "class-level-accuracy": self._class_level_accuracy,
                             "confusion_matrix": self._confusion_matrix,
+                            "precision": self._precision,
                             "class-level-precision": self._class_level_precision}
         all_names = list(__all_metrics__.keys())
         if metric_names is None:
@@ -62,6 +63,11 @@ class MetricComputer(object):
         y_pred = pred.detach().cpu()
         return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
  
+    def _precision(self, out, pred, target):
+        # Calculate overall precision
+        # Note: Assumes binary or multi-class single-label classification
+        return precision_score(target.cpu(), pred.cpu(), average='weighted', zero_division=0)
+    
     def _class_level_precision(self, out, pred, target):
         # Calculate precision for each class and return as a dictionary
         pred = pred.detach().cpu()
