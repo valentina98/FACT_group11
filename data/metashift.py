@@ -44,12 +44,12 @@ class MetashiftDataset(Dataset):
 
 def load_data(args, preprocess):
     # Create datasets
-    train_dataset = MetashiftDataset(metadata_file='datasets/s1/s1_train_ft_metadata.csv',
-                            image_folder='datasets/s1/s1_train_finetune',
+    train_dataset = MetashiftDataset(metadata_file='datasets/metashift/s1/s1_train_ft_metadata.csv',
+                            image_folder='datasets/metashift/s1/s1_train_finetune',
                             transform=preprocess)
 
-    test_dataset = MetashiftDataset(metadata_file='datasets/s1/s1_test_ft_metadata.csv',
-                            image_folder='datasets/s1/s1_test_finetune',
+    test_dataset = MetashiftDataset(metadata_file='datasets/metashift/s1/s1_test_ft_metadata.csv',
+                            image_folder='datasets/metashift/s1/s1_test_finetune',
                             transform=preprocess)
     # Create data loaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
