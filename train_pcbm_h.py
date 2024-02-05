@@ -36,9 +36,9 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     epoch_summary = {"Accuracy": AverageMeter()}
     tqdm_loader = tqdm(loader)
     computer = MetricComputer(n_classes=num_classes)
+
     all_preds = []
     all_labels = []
-    
     for batch_X, batch_Y in tqdm(loader):
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
         out = posthoc_layer(batch_X)    
@@ -70,14 +70,15 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
     cls_criterion = nn.CrossEntropyLoss()
 
     
-    all_train_preds = []
-    all_train_labels = []
     for epoch in range(1, args.num_epochs+1):
         print(f"Epoch: {epoch}")
         epoch_summary = {"CELoss": AverageMeter(),
                          "Accuracy": AverageMeter()}
         tqdm_loader = tqdm(train_loader)
         computer = MetricComputer(n_classes=num_classes)
+        
+        all_train_preds = []
+        all_train_labels = []
         for batch_X, batch_Y in tqdm(train_loader):
             batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device)
             optimizer.zero_grad()
@@ -116,7 +117,6 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             "test_precision": test_metrics["Precision"],
             "train_ce_loss": epoch_summary["CELoss"].avg
         }
-
 
         # Print out the metrics for the current epoch
         print(f"Epoch {epoch} summary:")
