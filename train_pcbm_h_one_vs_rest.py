@@ -103,8 +103,12 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
                 
                 epoch_summary["CELoss"].update(cls_loss.detach().item(), batch_X.shape[0])
                 metrics = computer(out, batch_Y) 
+
                 epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0])
-                epoch_summary["Precision"].update(metrics["precision"], batch_X.shape[0])
+                
+                # Calculate the mean precision across all classes
+                mean_precision = np.mean(list(metrics["class-level-precision"].values()))
+                epoch_summary["Precision"].update(mean_precision, batch_X.shape[0])
 
                 summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
                 summary_text = " ".join(summary_text)
