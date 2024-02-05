@@ -90,8 +90,8 @@ def main(args, concept_bank, backbone, preprocess):
     posthoc_layer.set_weights(weights=weights, bias=bias)
 
     # Flatten the weights and bias
-    posthoc_layer.linear.weight = posthoc_layer.linear.weight.view(20, 170)
-    posthoc_layer.linear.bias = posthoc_layer.linear.bias.view(20)
+    posthoc_layer.classifier.weight = posthoc_layer.classifier.weight.view(20, 170)
+    posthoc_layer.classifier.bias = posthoc_layer.classifier.bias.view(20)
 
     # Sorry for the model path hack. Probably i'll change this later.
     model_path = os.path.join(args.out_dir,
