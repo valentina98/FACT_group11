@@ -26,10 +26,13 @@ def config():
     parser.add_argument("--alpha", default=0.99, type=float, help="Sparsity coefficient for elastic net.")
     parser.add_argument("--lam", default=1e-5, type=float, help="Regularization strength.")
     parser.add_argument("--lr", default=1e-3, type=float)
+    parser.add_argument("--edit", default="wo", type=str)
+    parser.add_argument("--prune_class_idx", default=0, type=int)
+    parser.add_argument("--prune_concept", default="dog", type=str)
     return parser.parse_args()
 
 
-def run_linear_probe(args, train_data, test_data):
+def run_linear_probe(args, train_data, test_data, posthoc_l):
     train_features, train_labels = train_data
     test_features, test_labels = test_data
     
@@ -40,6 +43,21 @@ def run_linear_probe(args, train_data, test_data):
                                alpha=args.lam, l1_ratio=args.alpha, verbose=0,
                                penalty="elasticnet", max_iter=10000)
     classifier.fit(train_features, train_labels)
+    
+    if args.edit == "prune":
+        if args.prune_concept in posthoc_l.names:
+            concept_idx = posthoc_l.names.index(args.prune_concept)
+            classifier.coef_[args.prune_class_idx, concept_idx] = 0.0
+    
+    elif args.edit == "prune+norm":
+        if args.prune_concept in posthoc_l.names:
+            concept_idx = posthoc_l.names.index(args.prune_concept)
+            classifier.coef[args.prune_class_idx, concept_idx] = 0.0
+        
+        pruned_norm = torch.norm(pruned_norm, p=1).item()
+        remaining_norm = torch.norm(weights[args.prune_class_idx], p=1).item()
+        scaling_factor = 1 + (pruned_norm / remaining_norm)
+        classifier.coef_[args.prune_class_idx] = classifier.coef_[args.prune_class_idx] * scaling_factor
 
     train_predictions = classifier.predict(train_features)
     train_accuracy = np.mean((train_labels == train_predictions).astype(float)) * 100.

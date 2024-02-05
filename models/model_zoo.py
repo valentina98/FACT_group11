@@ -118,7 +118,19 @@ def get_model(args, backbone_name="resnet18_cub", full_model=False):
         model_name = 'bert-base-uncased'
         backbone = BertModel.from_pretrained(model_name)
         preprocess = None
-        
+             
+    elif backbone_name == "resnet18":
+        from pytorchcv.model_provider import get_model as ptcv_get_model
+        model = ptcv_get_model(backbone_name, pretrained=True, root=args.out_dir)
+        backbone, model_top = ResNetBottom(model), ResNetTop(model)
+        imagenet_mean_pxs = np.array([0.485, 0.456, 0.406])
+        imagenet_std_pxs = np.array([0.229, 0.224, 0.225])
+        preprocess = transforms.Compose([
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(imagenet_mean_pxs, imagenet_std_pxs)
+            ]) 
+    
     else:
         raise ValueError(backbone_name)
 

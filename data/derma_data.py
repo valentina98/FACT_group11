@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from .constants import HAM10K_DATA_DIR, DERM7_FOLDER
+from sklearn.preprocessing import LabelEncoder
 
 
 class DermDataset(Dataset):
@@ -101,3 +102,56 @@ def load_ham_data(args, preprocess):
     
     return train_loader, val_loader, idx_to_class
 
+class ISICDataset(Dataset):
+    def __init__(self, csv_file, root_dir, label_encoder, transform=None):
+        self.frame = pd.read_csv(csv_file)
+        self.root_dir = root_dir
+        self.transform = transform
+        self.label_encoder = label_encoder
+
+        # Encode target labels using the provided label encoder
+        self.frame['encoded_target'] = self.label_encoder.transform(self.frame['target'])
+
+    def __len__(self):
+        return len(self.frame)
+
+    def __getitem__(self, idx):
+        img_name = os.path.join(self.root_dir, self.frame.iloc[idx, 0])
+        image = Image.open(img_name)
+        label = self.frame.iloc[idx]['encoded_target']
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
+
+    @staticmethod
+    def get_idx_to_class(label_encoder):
+        return {v: k for k, v in enumerate(label_encoder.classes_)}
+
+def load_isic_data(args, preprocess):
+    # Read CSV files
+    train_df = pd.read_csv('datasets/ISIC/ISIC_train_metadata.csv')
+    test_df = pd.read_csv('datasets/ISIC/ISIC_test_metadata.csv')
+
+    # Fit label encoder on combined labels
+    label_encoder = LabelEncoder()
+    label_encoder.fit(pd.concat([train_df['target'], test_df['target']]))
+
+    # Get idx_to_class dictionary
+    idx_to_class = ISICDataset.get_idx_to_class(label_encoder)
+
+    train_dataset = ISICDataset(csv_file='datasets/ISIC/ISIC_train_metadata.csv',
+                            root_dir='datasets/ISIC/selected_train',
+                            label_encoder=label_encoder,
+                            transform=preprocess)
+
+    test_dataset = ISICDataset(csv_file='datasets/ISIC/ISIC_test_metadata.csv',
+                           root_dir='datasets/ISIC/selected_test',
+                           label_encoder=label_encoder,
+                           transform=preprocess)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+
+    return train_loader, test_loader, idx_to_class

@@ -128,13 +128,12 @@ def get_dataset(args, preprocess=None):
         print(len(train_loader.dataset), "training set size")
         print(len(test_loader.dataset), "test set size")
         
-
     elif args.dataset == "ham10000":
         from .derma_data import load_ham_data
         train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
-    
+
     elif args.dataset == "20ng":
         train_data = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
         test_data = fetch_20newsgroups(subset='test', remove=('headers', 'footers', 'quotes'))
@@ -182,7 +181,18 @@ def get_dataset(args, preprocess=None):
         idx_to_class = {i: class_name for i, class_name in enumerate(train_data.target_names)}
         classes = train_data.target_names
         return train_loader, test_loader, classes, val_loader
-
+        
+    elif args.dataset == "isic":
+        from .derma_data import load_isic_data
+        train_loader, test_loader, idx_to_class = load_isic_data(args, preprocess)
+        class_to_idx = {v:k for k,v in idx_to_class.items()}
+        classes = list(class_to_idx.keys())
+    
+    elif args.dataset == "metashift":
+        from .metashift import load_data
+        train_loader, test_loader, idx_to_class = load_data(args, preprocess)
+        class_to_idx = {v:k for k,v in idx_to_class.items()}
+        classes = list(class_to_idx.keys())
 
     else:
         raise ValueError(args.dataset)
