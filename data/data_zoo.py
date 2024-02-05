@@ -112,37 +112,13 @@ def get_dataset(args, preprocess=None):
     elif args.dataset == "coco_stuff":
         # The list of 20 biased COCO classes discussed in the paper https://arxiv.org/pdf/2001.03152.pdf         
         classes = ['cup', 'wine glass', 'handbag', 'apple', 'car', 'bus', 
-                          'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
-                          'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
-                          'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
+                    'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
+                    'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
+                    'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
         
         from .coco_stuff_data import load_coco_stuff_data
         train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, classes, 500, 250)
-
-    elif args.dataset == "coco_stuff_multilabel":
-        # The list of 20 biased COCO classes discussed in the paper https://arxiv.org/pdf/2001.03152.pdf         
-        classes = ['cup', 'wine glass', 'handbag', 'apple', 'car', 'bus', 
-                          'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
-                          'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
-                          'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
         
-        # Co-ccurring classes = ['dining table', 'person', 'fruit', 'road', 'plant vase', 'oven', 'mouse', 'building', 'ceiling', 'towel']
-        # Unsupported by COCO classes: ['fruit', 'road', 'plant vase', 'building', 'ceiling', 'towel']
-        # We define the following set of classes that is as close as possible to the co-occurring classes in the referenced paper
-        # co_ocurring_classes = ['dining table',   # Exists in COCO
-        #                         'person',        # Exists in COCO
-        #                         'banana',        # Replacing 'fruit' with a specific fruit category in COCO
-        #                         'road',          # Exists in COCO (closest to 'street')
-        #                         'vase',          # Replacing 'plant vase' with 'vase'
-        #                         'oven',          # Exists in COCO
-        #                         'laptop',        # Replacing 'mouse' with 'laptop'
-        #                         'building',      # Exists in COCO
-        #                         'window',        # Replacing 'ceiling' with 'window'
-        #                         'sink']          # Replacing 'towel' with 'sink'
-        
-        from .coco_stuff_data import load_coco_stuff_data_multilabel
-        train_loader, test_loader, idx_to_class = load_coco_stuff_data_multilabel(args, classes, 500, 250)
-
     else:
         raise ValueError(args.dataset)
 
