@@ -37,7 +37,7 @@ def config():
 def eval_model(args, posthoc_layer, loader, num_classes):
     for class_idx in range(num_classes):
             
-        epoch_summary = {"Accuracy": AverageMeter()}
+        epoch_summary = {"Accuracy": AverageMeter(), "Precision": AverageMeter()}
         tqdm_loader = tqdm(loader)
         computer = MetricComputer(n_classes=num_classes)
         all_preds = []
@@ -50,7 +50,10 @@ def eval_model(args, posthoc_layer, loader, num_classes):
             all_labels.append(batch_Y.detach().cpu().numpy())
             metrics = computer(out, batch_Y) 
             epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0])
-            epoch_summary["Precision"].update(metrics["precision"], batch_X.shape[0])
+            
+            # Calculate the mean precision across all classes
+            mean_precision = np.mean(list(metrics["class-level-precision"].values()))
+            epoch_summary["Precision"].update(mean_precision, batch_X.shape[0])
 
             summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
             summary_text = "Eval - " + " ".join(summary_text)
