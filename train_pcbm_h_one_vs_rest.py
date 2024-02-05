@@ -8,14 +8,12 @@ import sys
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from scipy.special import softmax
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
 from models import PosthocLinearCBM, PosthocHybridCBM, get_model
 from training_tools import load_or_compute_projections, AverageMeter, MetricComputer
-
-
 
 def config():
     parser = argparse.ArgumentParser()
@@ -38,36 +36,49 @@ def eval_model(args, posthoc_layer, loader, num_classes):
     epoch_summary = {"Accuracy": AverageMeter()}
     tqdm_loader = tqdm(loader)
     computer = MetricComputer(n_classes=num_classes)
+
     all_preds = []
     all_labels = []
-    
     for batch_X, batch_Y in tqdm(loader):
         batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device) 
-        out = posthoc_layer(batch_X)            
+        out = posthoc_layer(batch_X)    
+
         all_preds.append(out.detach().cpu().numpy())
         all_labels.append(batch_Y.detach().cpu().numpy())
+
         metrics = computer(out, batch_Y) 
         epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0]) 
+
         summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
         summary_text = "Eval - " + " ".join(summary_text)
         tqdm_loader.set_description(summary_text)
     
     all_preds = np.concatenate(all_preds, axis=0)
     all_labels = np.concatenate(all_labels, axis=0)
+    pred_classes = np.argmax(all_preds, axis=1)
+    
+    epoch_summary["Precision"] = precision_score(all_labels, pred_classes, average='weighted', zero_division=0)
+    
     if all_labels.max() == 1:
         auc = roc_auc_score(all_labels, softmax(all_preds, axis=1)[:, 1])
         return auc
-    return epoch_summary["Accuracy"]
+    
+    return epoch_summary
 
 
 def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_classes):
     cls_criterion = nn.CrossEntropyLoss()
+
+    
     for epoch in range(1, args.num_epochs+1):
         print(f"Epoch: {epoch}")
         epoch_summary = {"CELoss": AverageMeter(),
                          "Accuracy": AverageMeter()}
         tqdm_loader = tqdm(train_loader)
         computer = MetricComputer(n_classes=num_classes)
+        
+        all_train_preds = []
+        all_train_labels = []
         for batch_X, batch_Y in tqdm(train_loader):
             batch_X, batch_Y = batch_X.to(args.device), batch_Y.to(args.device)
             optimizer.zero_grad()
@@ -81,19 +92,41 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             metrics = computer(out, batch_Y) 
             epoch_summary["Accuracy"].update(metrics["accuracy"], batch_X.shape[0])
 
+            all_train_preds.append(out.detach().cpu().numpy())
+            all_train_labels.append(batch_Y.detach().cpu().numpy())
+
             summary_text = [f"Avg. {k}: {v.avg:.3f}" for k, v in epoch_summary.items()]
             summary_text = " ".join(summary_text)
             tqdm_loader.set_description(summary_text)
         
-        latest_info = dict()
-        latest_info["epoch"] = epoch
-        latest_info["args"] = args
-        latest_info["train_acc"] = epoch_summary["Accuracy"]
-        latest_info["test_acc"] = eval_model(args, posthoc_layer, val_loader, num_classes)
-        print("Final test acc: ", latest_info["test_acc"].avg)
+        all_train_preds = np.concatenate(all_train_preds, axis=0)
+        all_train_labels = np.concatenate(all_train_labels, axis=0)
+        train_pred_classes = np.argmax(all_train_preds, axis=1)
+        train_overall_precision = precision_score(all_train_labels, train_pred_classes, average='weighted', zero_division=0)
+
+        # Evaluate the model
+        test_metrics = eval_model(args, posthoc_layer, val_loader, num_classes)
+
+        # Construct the latest_info dictionary
+        latest_info = {
+            "epoch": epoch,
+            "args": args,
+            "train_acc": epoch_summary["Accuracy"].avg,
+            "test_acc": test_metrics["Accuracy"].avg,
+            "train_precision": train_overall_precision,
+            "test_precision": test_metrics["Precision"],
+            "train_ce_loss": epoch_summary["CELoss"].avg
+        }
+
+        # Print out the metrics for the current epoch
+        print(f"Epoch {epoch} summary:")
+        print(f"  Train Accuracy: {latest_info['train_acc']:.2f}")
+        print(f"  Test Accuracy: {latest_info['test_acc']:.2f}")
+        print(f"  Train Precision: {latest_info['train_precision']:.2f}")
+        print(f"  Test Precision: {latest_info['test_precision']:.2f}")
+        print(f"  Train Cross-Entropy Loss: {latest_info['train_ce_loss']:.2f}")
+        
     return latest_info
-
-
 
 def main(args, backbone, preprocess):
     train_loader, test_loader, idx_to_class, classes = get_dataset(args, preprocess)

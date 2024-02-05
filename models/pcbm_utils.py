@@ -87,6 +87,7 @@ class PosthocLinearCBM(nn.Module):
         analysis = "\n".join(output)
         return analysis
 
+
 class PosthocHybridCBM(nn.Module):
     def __init__(self, bottleneck: PosthocLinearCBM):
         """
@@ -110,7 +111,7 @@ class PosthocHybridCBM(nn.Module):
         if return_dist:
             return out, x
         return out
-    
+
     def trainable_params(self):
         return self.residual_classifier.parameters()
     
@@ -119,3 +120,4 @@ class PosthocHybridCBM(nn.Module):
 
     def analyze_classifier(self):
         return self.bottleneck.analyze_classifier()
+
