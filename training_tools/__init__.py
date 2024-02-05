@@ -1,4 +1,4 @@
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_score, average_precision_score
 import numpy as np
 from .embedding_tools import load_or_compute_projections
 
@@ -24,7 +24,9 @@ class MetricComputer(object):
     def __init__(self, metric_names=None, n_classes=5):
         __all_metrics__ = {"accuracy": self._accuracy, 
                             "class-level-accuracy": self._class_level_accuracy,
-                            "confusion_matrix": self._confusion_matrix}
+                            "confusion_matrix": self._confusion_matrix,
+                            "precision": self._precision,
+                            "class-level-precision": self._class_level_precision}
         all_names = list(__all_metrics__.keys())
         if metric_names is None:
             metric_names = all_names
@@ -60,3 +62,23 @@ class MetricComputer(object):
         y_true = target.detach().cpu()
         y_pred = pred.detach().cpu()
         return confusion_matrix(y_true, y_pred, normalize=None, labels=np.arange(self.n_classes))
+ 
+    def _precision(self, out, pred, target):
+        # Calculate overall precision
+        # Note: Assumes binary or multi-class single-label classification
+        return precision_score(target.cpu(), pred.cpu(), average='weighted', zero_division=0)
+    
+    def _class_level_precision(self, out, pred, target):
+        # Calculate precision for each class and return as a dictionary
+        pred = pred.detach().cpu()
+        target = target.detach().cpu()
+        precision_per_class = {}
+        for c in range(self.n_classes):
+            class_pred = (pred == c)
+            class_true = (target == c)
+            if class_pred.sum().item() == 0:  # Avoid division by zero
+                precision_per_class[c] = 0
+            else:
+                precision_per_class[c] = precision_score(class_true, class_pred, zero_division=0)
+        return precision_per_class
+    

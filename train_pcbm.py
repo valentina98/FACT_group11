@@ -4,8 +4,7 @@ import pickle
 import numpy as np
 import torch
 from sklearn.linear_model import SGDClassifier
-from sklearn.metrics import roc_auc_score
-
+from sklearn.metrics import roc_auc_score, precision_score
 
 from data import get_dataset
 from concepts import ConceptBank
@@ -60,28 +59,48 @@ def run_linear_probe(args, train_data, test_data, posthoc_l):
         classifier.coef_[args.prune_class_idx] = classifier.coef_[args.prune_class_idx] * scaling_factor
 
     train_predictions = classifier.predict(train_features)
+    test_predictions = classifier.predict(test_features)
+
+    # Overall accuracy
     train_accuracy = np.mean((train_labels == train_predictions).astype(float)) * 100.
-    predictions = classifier.predict(test_features)
-    test_accuracy = np.mean((test_labels == predictions).astype(float)) * 100.
+    test_accuracy = np.mean((test_labels == test_predictions).astype(float)) * 100.
+
+    # Overall precision
+    train_precision = precision_score(train_labels, train_predictions, average='weighted', zero_division=0) * 100.
+    test_precision = precision_score(test_labels, test_predictions, average='weighted', zero_division=0) * 100.
+
 
     # Compute class-level accuracies. Can later be used to understand what classes are lacking some concepts.
     cls_acc = {"train": {}, "test": {}}
+    cls_precision = {"train": {}, "test": {}}
     for lbl in np.unique(train_labels):
         test_lbl_mask = test_labels == lbl
         train_lbl_mask = train_labels == lbl
-        cls_acc["test"][lbl] = np.mean((test_labels[test_lbl_mask] == predictions[test_lbl_mask]).astype(float))
-        cls_acc["train"][lbl] = np.mean(
-            (train_labels[train_lbl_mask] == train_predictions[train_lbl_mask]).astype(float))
-        print(f"{lbl}: {cls_acc['test'][lbl]}")
+        
+        # Class-level accuracy
+        cls_acc["test"][lbl] = np.mean((test_labels[test_lbl_mask] == test_predictions[test_lbl_mask]).astype(float))
+        cls_acc["train"][lbl] = np.mean((train_labels[train_lbl_mask] == train_predictions[train_lbl_mask]).astype(float))
 
-    run_info = {"train_acc": train_accuracy, "test_acc": test_accuracy,
-                "cls_acc": cls_acc,
-                }
+        # print(f"{lbl}: {cls_acc['test'][lbl]}")
 
+        # Class-level precision
+        cls_precision["test"][lbl] = precision_score(test_labels[test_lbl_mask], test_predictions[test_lbl_mask], average='macro', zero_division=0)
+        cls_precision["train"][lbl] = precision_score(train_labels[train_lbl_mask], train_predictions[train_lbl_mask], average='macro', zero_division=0)
+
+    run_info = {
+        "train_acc": train_accuracy,
+        "test_acc": test_accuracy,
+        "train_precision": train_precision,
+        "test_precision": test_precision,
+        "cls_acc": cls_acc,
+        "cls_precision": cls_precision
+    }
+    
     # If it's a binary task, we compute auc
     if test_labels.max() == 1:
         run_info["test_auc"] = roc_auc_score(test_labels, classifier.decision_function(test_features))
         run_info["train_auc"] = roc_auc_score(train_labels, classifier.decision_function(train_features))
+
     return run_info, classifier.coef_, classifier.intercept_
 
 

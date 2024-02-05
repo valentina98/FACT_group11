@@ -194,6 +194,16 @@ def get_dataset(args, preprocess=None):
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
 
+    elif args.dataset == "coco_stuff":
+        # The list of 20 biased COCO classes discussed in the paper https://arxiv.org/pdf/2001.03152.pdf         
+        classes = ['cup', 'wine glass', 'handbag', 'apple', 'car', 'bus', 
+                    'potted plant', 'spoon', 'microwave', 'keyboard', 'skis', 
+                    'clock', 'sports ball', 'remote', 'snowboard', 'toaster', 
+                    'hair drier', 'tennis racket', 'skateboard', 'baseball glove']
+        
+        from .coco_stuff_data import load_coco_stuff_data
+        train_loader, test_loader, idx_to_class = load_coco_stuff_data(args, classes, 500, 250)
+        
     else:
         raise ValueError(args.dataset)
 
