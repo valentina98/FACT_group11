@@ -51,7 +51,7 @@ def run_linear_probe(args, train_data, test_data, posthoc_l):
     elif args.edit == "prune+norm":
         if args.prune_concept in posthoc_l.names:
             concept_idx = posthoc_l.names.index(args.prune_concept)
-            classifier.coef[args.prune_class_idx, concept_idx] = 0.0
+            classifier.coef_[args.prune_class_idx, concept_idx] = 0.0
         
         pruned_norm = torch.norm(pruned_norm, p=1).item()
         remaining_norm = torch.norm(weights[args.prune_class_idx], p=1).item()
