@@ -66,9 +66,8 @@ def run_linear_probe(args, train_data, test_data, num_classes):
         # print(f"{lbl}: {cls_acc['test'][lbl]}")
 
         # Class-level precision
-        cls_precision["test"][lbl] = precision_score(test_labels[test_lbl_mask], test_predictions[test_lbl_mask], average=None, zero_division=0)
-        cls_precision["train"][lbl] = precision_score(train_labels[train_lbl_mask], train_predictions[train_lbl_mask], average=None, zero_division=0)
-
+        cls_precision["test"][lbl] = precision_score(test_labels[test_lbl_mask], test_predictions[test_lbl_mask], average='macro', zero_division=0)
+        cls_precision["train"][lbl] = precision_score(train_labels[train_lbl_mask], train_predictions[train_lbl_mask], average='macro', zero_division=0)
 
     run_info = {
         "train_acc": train_accuracy,
