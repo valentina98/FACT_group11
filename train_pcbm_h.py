@@ -113,7 +113,7 @@ def train_hybrid(args, train_loader, val_loader, posthoc_layer, optimizer, num_c
             "train_acc": epoch_summary["Accuracy"].avg,
             "test_acc": test_metrics["Accuracy"].avg,
             "train_precision": train_overall_precision,
-            "test_precision": test_metrics["Precision"].avg,
+            "test_precision": test_metrics["Precision"],
             "train_ce_loss": epoch_summary["CELoss"].avg
         }
 
