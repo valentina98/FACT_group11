@@ -64,6 +64,8 @@ class MetricComputer(object):
  
     def _precision(self, out, pred, target):
         # Calculate precision for each class and return as a dictionary
+        pred = pred.detach().cpu()
+        target = target.detach().cpu()
         precision_per_class = {}
         for c in range(self.n_classes):
             class_pred = (pred == c)
@@ -74,34 +76,3 @@ class MetricComputer(object):
                 precision_per_class[c] = precision_score(class_true, class_pred, zero_division=0)
         return precision_per_class
     
-class MetricComputerMAP(object):
-    def __init__(self, n_classes=5):
-        self.n_classes = n_classes
-
-    def __call__(self, out, target):
-        """
-        Compute the mean average precision across all classes.
-
-        Args:
-            out (torch.Tensor): Model output probabilities for each class.
-            target (torch.Tensor): Target binary labels for each class.
-
-        Returns:
-            float: Mean average precision score.
-        """
-        mAP = self._mean_average_precision(out, target)
-        return {"mean_average_precision": mAP}
-
-    def _mean_average_precision(self, out, target):
-        average_precisions = []
-        out = out.detach().cpu().numpy()
-        target = target.detach().cpu().numpy()
-
-        for c in range(self.n_classes):
-            class_scores = out[:, c]
-            true_class = target[:, c]
-            ap = average_precision_score(true_class, class_scores)
-            average_precisions.append(ap)
-
-        mean_ap = np.mean(average_precisions)
-        return mean_ap
