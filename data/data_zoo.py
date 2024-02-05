@@ -2,54 +2,6 @@ from torchvision import datasets
 import torch
 import os
 
-def sample_or_upsample(dataset_view, num_samples):
-    """
-    Samples or upsamples a FiftyOne dataset view to have the specified number of samples.
-
-    Args:
-    - dataset_view (fo.View): The FiftyOne dataset view to sample from.
-    - num_samples (int): The desired number of samples.
-
-    Returns:
-    - List: A list of sampled filepaths.
-    """
-    # Your logic to sample or upsample the dataset view
-    # This function should return a list of filepaths for the sampled images
-    # ...
-
-def create_pytorch_dataset(filepaths, labels, transform):
-    """
-    Creates a PyTorch dataset from filepaths and labels.
-
-    Args:
-    - filepaths (List): List of image filepaths.
-    - labels (List): Corresponding labels for the images.
-    - transform (callable): Transform to be applied on a sample.
-
-    Returns:
-    - torch.utils.data.Dataset
-    """
-    class CustomDataset(torch.utils.data.Dataset):
-        def __init__(self, filepaths, labels, transform=None):
-            self.filepaths = filepaths
-            self.labels = labels
-            self.transform = transform
-
-        def __len__(self):
-            return len(self.filepaths)
-
-        def __getitem__(self, idx):
-            image = Image.open(self.filepaths[idx])
-            label = self.labels[idx]
-
-            if self.transform:
-                image = self.transform(image)
-
-            return image, label
-
-    return CustomDataset(filepaths, labels, transform)
-
-
 def get_dataset(args, preprocess=None):
     if args.dataset == "cifar10":
         trainset = datasets.CIFAR10(root=args.out_dir, train=True,
