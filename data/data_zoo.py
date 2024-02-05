@@ -62,6 +62,24 @@ def get_dataset(args, preprocess=None):
         train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
         class_to_idx = {v:k for k,v in idx_to_class.items()}
         classes = list(class_to_idx.keys())
+        
+    elif args.dataset == "ham10000":
+        from .derma_data import load_ham_data
+        train_loader, test_loader, idx_to_class = load_ham_data(args, preprocess)
+        class_to_idx = {v:k for k,v in idx_to_class.items()}
+        classes = list(class_to_idx.keys())
+    
+    elif args.dataset == "isic":
+        from .derma_data import load_isic_data
+        train_loader, test_loader, idx_to_class = load_isic_data(args, preprocess)
+        class_to_idx = {v:k for k,v in idx_to_class.items()}
+        classes = list(class_to_idx.keys())
+    
+    elif args.dataset == "metashift":
+        from .metashift import load_data
+        train_loader, test_loader, idx_to_class = load_data(args, preprocess)
+        class_to_idx = {v:k for k,v in idx_to_class.items()}
+        classes = list(class_to_idx.keys())
 
 
     else:
